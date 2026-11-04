@@ -128,7 +128,7 @@ flatpak install --user ./madlions-control-0.1.0-x86_64.flatpak
 flatpak run io.github.madlionscontrol.MadlionsControl
 ```
 
-The Flatpak is self-contained (GNOME runtime) and has raw device access through
+The Flatpak uses the GNOME runtime and has raw device access through
 `--device=all`. If the keyboard is not detected, install the udev rule below and
 replug it.
 
@@ -285,6 +285,10 @@ If your MADLIONS board works — or almost works — a
 [device report](https://github.com/NasirA1991/madlions-control/issues/new?template=device-report.yml)
 is the fastest way to widen support. `madlionsctl report` produces a read-only
 snapshot; review it before posting and remove anything you do not want to share.
+
+## Security
+
+Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
 
 ## License
 

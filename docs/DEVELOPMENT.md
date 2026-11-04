@@ -117,19 +117,10 @@ makepkg -si
 ```
 
 - AppImage: application only; the host provides GTK/PyGObject.
-- Flatpak: self-contained GNOME runtime; raw devices via `--device=all`.
-- AUR: stable and `-git` packages rendered by GitHub Actions.
+- Flatpak: uses the GNOME runtime; raw devices via `--device=all`.
 
-## Release
+## Releases
 
-1. Bump `VERSION` in `madlions_control/config.py`, `pyproject.toml` and the
-   PKGBUILDs (`scripts/bump-version.sh X.Y.Z`).
-2. Commit, tag `vX.Y.Z`, push the tag.
-3. `Release` builds the source tarball, AppImage and Flatpak, creates the GitHub
-   release, and publishes `madlions-control` to the AUR when
-   `AUR_ENABLED=true` and the AUR secrets are set.
-4. `Publish AUR (git)` tracks `main` separately.
-5. Regenerate screenshots if the UI changed.
-
-Repository variable `AUR_ENABLED` and secrets `AUR_USERNAME`, `AUR_EMAIL`,
-`AUR_SSH_PRIVATE_KEY` are required for AUR publishing.
+Releases are built by GitHub Actions from `v<version>` tags. Keep `VERSION` in
+`madlions_control/config.py` and `pyproject.toml` in sync, and regenerate the
+screenshots if the UI changed. Do not upload release assets by hand.

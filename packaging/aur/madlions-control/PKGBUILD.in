@@ -1,5 +1,4 @@
 # Maintainer: Nasir A. <112448715+NasirA1991@users.noreply.github.com>
-# Rendered by .github/workflows/release.yml for each v* tag.
 pkgname=madlions-control
 pkgver=@VERSION@
 pkgrel=1

@@ -1,5 +1,4 @@
 # Maintainer: Nasir A. <112448715+NasirA1991@users.noreply.github.com>
-# Local build: run `makepkg -si` inside this repository.
 pkgname=madlions-control
 pkgver=0.1.0
 pkgrel=1
