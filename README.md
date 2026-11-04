@@ -18,7 +18,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
 </p>
 
-![Overview](docs/screenshots/overview.png?v=2)
+![Overview](docs/screenshots/overview-0.3.2.png)
 
 ## Why
 
@@ -41,7 +41,7 @@ feel of every single key**.
 - Colour heat map shows the actuation value of every cap.
 - Changes apply live; **Save to keyboard** is the only thing that writes flash.
 
-![Per-key](docs/screenshots/per-key.png?v=2)
+![Per-key](docs/screenshots/per-key-0.3.2.png)
 
 ### Live analogue test
 

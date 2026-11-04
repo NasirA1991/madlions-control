@@ -77,8 +77,8 @@ shot() {
     echo "   $out/$name.png (${ww}x${wh})"
 }
 
-shot overview overview
-shot perkey per-key
+shot overview overview-0.3.2
+shot perkey per-key-0.3.2
 shot lighting lighting
 shot keymap keymap 513,400
 shot advanced advanced
