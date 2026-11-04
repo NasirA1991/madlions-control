@@ -63,6 +63,7 @@ class ProtocolUnitTests(unittest.TestCase):
         text = udev_rule()
         self.assertIn('idVendor}=="373b"', text)
         self.assertIn("uaccess", text)
+        self.assertNotIn('SUBSYSTEM=="usb"', text)
 
 
 class MacroTests(unittest.TestCase):

@@ -279,6 +279,10 @@ class DemoBackend:
         data[offset:offset + 2] = keycode.to_bytes(2, "big")
         self._keymap = bytes(data)
 
+    def write_buffer(self, cmd, data):
+        if cmd == 0x13:
+            self._keymap = bytes(data[:self.board.keymap_size])
+
     def read_macros(self) -> bytes:
         return self._macros
 

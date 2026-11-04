@@ -13,7 +13,12 @@ jobs:
       - name: Install test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-cairo
+          sudo apt-get install -y python3-cairo appstream desktop-file-utils shellcheck
+      - name: Validate metadata and scripts
+        run: |
+          appstreamcli validate --no-net data/metainfo/io.github.madlionscontrol.MadlionsControl.metainfo.xml
+          desktop-file-validate data/io.github.madlionscontrol.MadlionsControl.desktop
+          shellcheck install.sh uninstall.sh packaging/appimage/build.sh packaging/flatpak/build.sh
       - name: Unit tests
         run: python3 -m unittest discover -s tests -v
       - name: Byte-compile

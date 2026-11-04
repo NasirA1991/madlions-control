@@ -48,6 +48,18 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.1.1" date="2026-11-04">
+      <description>
+        <p>Reliability and recovery hardening.</p>
+        <ul>
+          <li>Malformed device replies can no longer stall keyboard I/O.</li>
+          <li>Full backups now include colours, keymap, macros and advanced keys.</li>
+          <li>Profile imports are size-limited, schema-checked and atomically saved.</li>
+          <li>CLI commands validate selectors and ranges, and read back writes.</li>
+          <li>Lighting controls are honestly read-only, and per-key black is preserved.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.0" date="2026-11-04">
       <description>
         <p>First public release.</p>

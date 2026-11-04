@@ -77,8 +77,12 @@ if [[ $USER_INSTALL -eq 0 ]]; then
 fi
 
 if [[ -z "$DESTDIR" ]]; then
-    command -v update-desktop-database >/dev/null && update-desktop-database "$APPDIR" || true
-    command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$ICONDIR" 2>/dev/null || true
+    if command -v update-desktop-database >/dev/null; then
+        update-desktop-database "$APPDIR" 2>/dev/null || true
+    fi
+    if command -v gtk-update-icon-cache >/dev/null; then
+        gtk-update-icon-cache -q -t "$ICONDIR" 2>/dev/null || true
+    fi
     if [[ $USER_INSTALL -eq 0 && $EUID -eq 0 ]]; then
         udevadm control --reload-rules 2>/dev/null || true
         udevadm trigger --subsystem-match=hidraw 2>/dev/null || true

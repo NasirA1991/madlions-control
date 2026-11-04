@@ -259,9 +259,27 @@ class MacrosPage(Page):
             self._render_steps()
 
     def _clear(self) -> None:
-        self.steps = []
-        self._render_steps()
-        self._save()
+        if not self.window.state.writable:
+            self.window.notify("The session is read-only.")
+            return
+        dialog = Adw.AlertDialog(
+            heading=f"Clear macro {self.slot + 1}?",
+            body="The slot is overwritten on the keyboard immediately.",
+        )
+        dialog.add_response("cancel", "Cancel")
+        dialog.add_response("clear", "Clear")
+        dialog.set_response_appearance("clear", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.set_default_response("cancel")
+        dialog.set_close_response("cancel")
+
+        def response(_dialog, response_id):
+            if response_id == "clear":
+                self.steps = []
+                self._render_steps()
+                self._save()
+
+        dialog.connect("response", response)
+        dialog.present(self.window)
 
     def _save(self) -> None:
         state = self.window.state

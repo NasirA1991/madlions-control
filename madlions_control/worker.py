@@ -249,14 +249,3 @@ class DeviceWorker:
     def stop_stream(self) -> None:
         self._stream_stop.set()
         self._stream_cb = None
-
-    def reconnect(self) -> None:
-        self._disconnect()
-        self._next_connect = 0.0
-
-    def save_reports(self) -> None:
-        self.submit(lambda device: device.read_report(), description="diagnostics")
-
-
-class ExternalError(Exception):
-    pass

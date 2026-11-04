@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build a self-contained Flatpak bundle.
+# Build a Flatpak bundle.
 #   ./packaging/flatpak/build.sh VERSION [OUTDIR]
 # Requires flatpak and flatpak-builder with the GNOME 50 runtime/SDK installed.
 set -euo pipefail

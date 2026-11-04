@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import os
+import sys
+import traceback
 from pathlib import Path
 
 import gi
@@ -340,10 +342,63 @@ class MainWindow(Adw.ApplicationWindow):
         if not self.state.writable:
             self.notify("The session is read-only. Fix permissions first.")
             return
+        persistent = profile.has_persistent_sections
+        body = (
+            f"{profile.description or 'No description.'}\n\n"
+            + profiles.apply_preview(profile)
+        )
+        if profile.keymap_hex:
+            try:
+                keymap_bytes = len(bytes.fromhex(profile.keymap_hex))
+            except ValueError:
+                keymap_bytes = -1
+            if keymap_bytes != self.state.board.keymap_size:
+                body += (
+                    f"\n\nWARNING: this backup's keymap is {keymap_bytes} bytes, "
+                    f"but {self.state.board.name} expects "
+                    f"{self.state.board.keymap_size}. Apply will stop before "
+                    f"writing anything."
+                )
+        if persistent:
+            body += (
+                "\n\nThis is a full backup. Keymap, macros and advanced bindings "
+                "are written to onboard memory immediately and cannot be undone "
+                "from this dialog."
+            )
+        else:
+            body += "\n\nTuning changes are volatile; use Save to keyboard to persist them."
+        dialog = Adw.AlertDialog(heading=f"Apply “{profile.name}”?", body=body)
+        dialog.add_response("cancel", "Cancel")
+        dialog.add_response("apply", "Apply")
+        dialog.set_response_appearance("apply", Adw.ResponseAppearance.SUGGESTED)
+        dialog.set_default_response("apply")
+        dialog.set_close_response("cancel")
+
+        def response(_dialog, response_id):
+            if response_id == "apply":
+                self._apply_profile_now(profile, persistent)
+
+        dialog.connect("response", response)
+        dialog.present(self)
+
+    def _apply_profile_now(self, profile, persistent: bool) -> None:
         base_state = self.state
+        include_keymap = bool(persistent and profile.keymap_hex)
+        include_macros = bool(persistent and profile.macros_hex)
+        include_advanced = bool(
+            persistent and (profile.advanced_keys is not None
+                            or profile.tap_dance is not None
+                            or profile.dks is not None)
+        )
 
         def job(device):
-            return profile.apply(device, base_state)
+            return profile.apply(
+                device,
+                base_state,
+                include_keymap=include_keymap,
+                include_macros=include_macros,
+                include_advanced=include_advanced,
+            )
 
         def done(actions):
             self.notify(

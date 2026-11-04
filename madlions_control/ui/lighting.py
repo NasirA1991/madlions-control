@@ -102,6 +102,11 @@ class LightingPage(Page):
         save = button("Save lighting", icon="document-save-symbolic", suggested=True)
         save.connect("clicked", lambda _b: self.window.save_lighting())
         self.add(self.header(save))
+        self._writable = True
+
+        self.warning = Section(tight=True)
+        self.warning.set_visible(False)
+        self.add(self.warning)
 
         content = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
         content.set_vexpand(True)
@@ -190,17 +195,17 @@ class LightingPage(Page):
         self.canvas = KeyboardCanvas(height=200, on_key=self._key_color_clicked)
         self.canvas.set_mode("lighting")
         preview.add(self.canvas)
-        self.per_key_switch = SwitchRow(
-            "Paint individual keys",
-            "Only the Custom effect shows per-key colours.",
-            on_toggle=lambda _on: self._refresh_preview(),
-        )
-        preview.add(self.per_key_switch)
+        per_key_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         self.custom_note = label(
-            "Choose “Custom” to make per-key colours visible. Click a key to pick its colour.",
-            "tiny muted", wrap=True,
+            "Per-key colours are only visible with the Custom effect.",
+            "row-sub", wrap=True,
         )
-        preview.add(self.custom_note)
+        self.custom_note.set_hexpand(True)
+        per_key_row.append(self.custom_note)
+        self.custom_button = button("Use Custom effect", flat=True)
+        self.custom_button.connect("clicked", lambda _b: self._choose_effect(1))
+        per_key_row.append(self.custom_button)
+        preview.add(per_key_row)
         right.append(preview)
 
         side = Section("Side light", "The light strip around the edge.")
@@ -244,6 +249,15 @@ class LightingPage(Page):
     def on_state(self, state) -> None:
         self.canvas.set_state(state)
         self.side_card.set_visible(bool(state.board.side_light) or self.window.demo)
+        self._writable = state.writable
+        if not state.connected:
+            self._show_warning("Connect a keyboard to change lighting.")
+        elif not state.writable:
+            self._show_warning(
+                "Read-only session. Lighting can be previewed but not changed."
+            )
+        else:
+            self.warning.set_visible(False)
         self._suppress = True
         try:
             light = state.light
@@ -255,29 +269,42 @@ class LightingPage(Page):
             self.color_hex.set_text(rgb_to_hex(color))
             self._highlight_effect(light.effect)
             effect = find_effect(light.effect)
-            self.speed.set_sensitive(bool(effect and effect.animated))
+            self.speed.set_sensitive(bool(effect and effect.animated) and state.writable)
+            self.brightness.set_sensitive(state.writable)
+            self.color_control.set_sensitive(state.writable)
+            for tile in self._effect_tiles.values():
+                tile.set_sensitive(state.writable)
+            self.side_mode.set_sensitive(state.writable)
+            self.side_colorful.set_sensitive(state.writable)
+            self.side_brightness.set_sensitive(state.writable)
+            self.side_speed.set_sensitive(state.writable)
             self.side_mode.set_selected(min(max(state.box_light.mode, 0), 5))
             self.side_colorful.set_active(bool(state.box_light.colorful))
             self.side_brightness.set_value(state.box_light.brightness)
             self.side_speed.set_value(state.box_light.speed)
             if effect and effect.number == 1:
                 self.custom_note.set_text(
-                    "Click a key on the preview to choose its colour. "
-                    "Ctrl-click paints every selected key."
+                    "Click a key on the preview to choose its colour."
                 )
+                self.custom_button.set_visible(False)
             else:
                 self.custom_note.set_text(
-                    "Per-key colours are only visible with the Custom effect. "
-                    "Pick Custom above to paint keys."
+                    "Per-key colours are only visible with the Custom effect."
                 )
+                self.custom_button.set_visible(state.writable)
         finally:
             self._suppress = False
         self._refresh_preview()
 
     def _open_main_color(self) -> None:
+        if not self._writable:
+            self.window.notify("The session is read-only.")
+            return
         ColorPickerDialog(self._color, self._set_main_color, title="Lighting colour").present(self.window)
 
     def _set_main_color(self, color: tuple[int, int, int]) -> None:
+        if not self._writable:
+            return
         self._color = color
         self.color_preview.set_color(color)
         self.color_hex.set_text(rgb_to_hex(color))
@@ -290,6 +317,12 @@ class LightingPage(Page):
             else:
                 tile.remove_css_class("active")
 
+    def _show_warning(self, text: str) -> None:
+        while child := self.warning.content.get_first_child():
+            self.warning.content.remove(child)
+        self.warning.set_visible(True)
+        self.warning.add(label(text, "warning-box", wrap=True))
+
     def _refresh_preview(self) -> None:
         state = self.window.state
         effect = find_effect(state.light.effect)
@@ -299,15 +332,12 @@ class LightingPage(Page):
             color = effective_color(state.light.r, state.light.g, state.light.b)
         per_key = bool(effect and effect.number == 1)
         self.canvas.set_lighting_preview(color, per_key)
-        self.per_key_switch.set_sensitive(True)
-        self._suppress = True
-        try:
-            self.per_key_switch.set_active(per_key)
-        finally:
-            self._suppress = False
 
     # -- edits -------------------------------------------------------------
     def _choose_effect(self, number: int) -> None:
+        if not self._writable:
+            self.window.notify("The session is read-only.")
+            return
         state = self.window.state
         light = LightInfo(
             effect=number,
@@ -326,7 +356,7 @@ class LightingPage(Page):
         self._apply_light()
 
     def _apply_light(self) -> None:
-        if self._suppress:
+        if self._suppress or not self._writable:
             return
         state = self.window.state
         effect_number = state.light.effect
@@ -353,6 +383,9 @@ class LightingPage(Page):
         self.window.worker.submit(job, error=error, description="lighting")
 
     def _key_color_clicked(self, row: int, col: int, ctrl: bool) -> None:
+        if not self._writable:
+            self.window.notify("The session is read-only.")
+            return
         if self.window.state.light.effect != 1:
             self._choose_effect(1)
         state = self.window.state
@@ -365,6 +398,8 @@ class LightingPage(Page):
         ).present(self.window)
 
     def _set_key_color(self, row: int, col: int, color: tuple[int, int, int]) -> None:
+        if not self._writable:
+            return
         state = self.window.state
         index = row * state.board.cols + col
         colors = list(state.colors)
@@ -390,7 +425,7 @@ class LightingPage(Page):
         self._side_debounce.trigger()
 
     def _apply_side(self) -> None:
-        if self._suppress:
+        if self._suppress or not self._writable:
             return
         state = self.window.state
         box = BoxLight(

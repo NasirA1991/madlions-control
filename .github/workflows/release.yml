@@ -6,11 +6,11 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Existing tag to release (for example v0.1.0)'
+        description: 'Existing tag to release (for example v0.1.1)'
         required: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   source:
@@ -88,6 +88,8 @@ jobs:
   release:
     needs: [source, appimage, flatpak]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v8
         with:

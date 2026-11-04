@@ -121,7 +121,7 @@ class OverviewPage(Page):
         manage = button("Manage", icon="view-list-symbolic")
         profiles_card = Section(
             "Profiles",
-            "Save the whole keyboard as a named profile and switch in one click.",
+            "Save tuning profiles, or create a full backup, and switch in one click.",
             trailing=manage,
         )
         manage.connect("clicked", lambda _b: self.window.go("profiles"))

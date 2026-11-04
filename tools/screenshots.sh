@@ -15,9 +15,18 @@ export MADLIONS_CONTROL_PROFILES="$tmp/profiles"
 export MADLIONS_NO_TOOLTIPS=1
 mkdir -p "$MADLIONS_CONTROL_PROFILES"
 python3 - <<'PY'
-from madlions_control import profiles
-for preset in profiles.presets():
-    preset.save()
+from madlions_control import profiles, state as state_mod
+from madlions_control.demo import DemoBackend
+
+backend = DemoBackend()
+state = state_mod.load_basic(backend)
+state = state_mod.load_colors(backend, state)
+profiles.Profile.capture(
+    state,
+    "My setup",
+    "Everyday tuning with a little more travel on the modifiers.",
+    full=False,
+).save()
 PY
 
 shot() {

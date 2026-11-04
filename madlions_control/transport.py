@@ -214,7 +214,6 @@ def udev_rule() -> str:
         "# MADLIONS / FGG keyboards (Shenzhen Yizhita, 373B)\n"
         "# Grants the active desktop user access to the vendor HID collection.\n"
         'KERNEL=="hidraw*", ATTRS{idVendor}=="373b", MODE="0660", TAG+="uaccess"\n'
-        'SUBSYSTEM=="usb", ATTRS{idVendor}=="373b", MODE="0660", TAG+="uaccess"\n'
     )
 
 

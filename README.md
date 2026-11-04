@@ -72,9 +72,10 @@ feel of every single key**.
 
 ### Profiles and everyday conveniences
 
-- Save the whole keyboard as a named profile, apply it in one click.
+- Save tuning profiles for everyday switching, or a full restorable backup in one click.
 - Ready-made **Rapid fire**, **Balanced** and **Typing** presets.
-- Export, import and automatic backups as readable JSON.
+- Export, import and automatic tuning snapshots as readable JSON. Full backups
+  also capture the keymap, macros and advanced bindings.
 - Command line (`madlionsctl`) for scripts, keybinds and status bars.
 - Demo mode (`--demo`) to explore the app without a keyboard.
 - No tray daemon, no background service, no account, no telemetry.
@@ -105,8 +106,7 @@ helps add it properly.
 
 ## Install
 
-Every release includes an AppImage, a self-contained Flatpak bundle and the
-source tarball. The AUR packages are available separately.
+Every release includes an AppImage, a Flatpak bundle and the source tarball. The AUR packages are available separately.
 
 ### Arch, CachyOS, EndeavourOS (AUR)
 
@@ -124,19 +124,21 @@ Download `madlions-control-<version>-x86_64.flatpak` from the
 [Releases page](https://github.com/NasirA1991/madlions-control/releases):
 
 ```bash
-flatpak install --user ./madlions-control-0.1.0-x86_64.flatpak
+flatpak install --user ./madlions-control-0.1.1-x86_64.flatpak
 flatpak run io.github.madlionscontrol.MadlionsControl
 ```
 
-The Flatpak uses the GNOME runtime and has raw device access through
-`--device=all`. If the keyboard is not detected, install the udev rule below and
+The Flatpak uses the GNOME runtime and needs broad raw-device access
+(`--device=all`) because Flatpak cannot narrow access to one `/dev/hidraw` node
+today. That is a real sandbox trade-off; the app only opens the vendor HID
+collection. If the keyboard is not detected, install the udev rule below and
 replug it.
 
 ### AppImage
 
 ```bash
-chmod +x madlions-control-0.1.0-x86_64.AppImage
-./madlions-control-0.1.0-x86_64.AppImage
+chmod +x madlions-control-0.1.1-x86_64.AppImage
+./madlions-control-0.1.1-x86_64.AppImage
 ```
 
 The AppImage uses the host's Python and GTK stack. Install it with:
@@ -150,7 +152,7 @@ sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 python3-cairo hicolor-ic
 sudo dnf install python3-gobject gtk4 libadwaita python3-cairo hicolor-icon-theme
 ```
 
-The Flatpak is the fully self-contained option.
+The Flatpak bundles the app and its GNOME runtime; see the device-access note above.
 
 ### From source
 
@@ -199,8 +201,8 @@ same instructions.
 - **Macros** — build a sequence, then save it to one of sixteen slots.
 - **Advanced** — switches, dead band and the keyboard's smart-key bindings.
 - **Test** — live analogue travel; click a key to follow it.
-- **Profiles** — save the entire setup, apply a preset, export/import, or create
-  a backup.
+- **Profiles** — save tuning setups, create a full restorable backup, apply a
+  preset, export/import, or roll back.
 
 A small but important detail: almost everything on this keyboard is applied
 volatilely first, so experimenting costs no flash write endurance. **Save to
@@ -221,6 +223,8 @@ madlionsctl light --effect 6 --brightness 150 --color '#ff4d6d'
 madlionsctl profile list
 madlionsctl profile apply "Rapid fire"
 madlionsctl profile save "My setup"
+madlionsctl profile backup --full
+madlionsctl profile apply "Full backup ..." --persistent
 madlionsctl report --json
 ```
 
@@ -237,8 +241,10 @@ any command uses a simulated keyboard.
 - **Keymap and macros are persistent by nature.** The app labels those edits
   clearly before you make them.
 - **Backups.** Profiles are plain JSON in
-  `~/.local/share/madlions-control/profiles`; automatic backups keep the last ten
-  snapshots.
+  `~/.local/share/madlions-control/profiles`; automatic tuning snapshots live in
+  `profiles/backups` and keep the last ten. Full backups also live there and
+  include the keymap, macros and advanced bindings. Restoring those persistent
+  sections asks for confirmation first.
 - **No firmware flashing.** Firmware update / DFU and Hall-sensor calibration are
   deliberately left to the official tool. A bad calibration is the one thing
   that can make a magnetic board feel wrong.

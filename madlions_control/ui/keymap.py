@@ -147,12 +147,12 @@ class KeymapPage(Page):
         self.change.connect("clicked", lambda _b: self._open_picker())
         actions.add(self.change)
         quick = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        transparent = button("Transparent", flat=True)
-        transparent.connect("clicked", lambda _b: self._write(keycodes.KC_TRNS))
-        clear = button("Clear", flat=True)
-        clear.connect("clicked", lambda _b: self._write(keycodes.KC_NO))
-        quick.append(transparent)
-        quick.append(clear)
+        self.transparent_btn = button("Transparent", flat=True)
+        self.transparent_btn.connect("clicked", lambda _b: self._write(keycodes.KC_TRNS))
+        self.clear_btn = button("Clear", flat=True)
+        self.clear_btn.connect("clicked", lambda _b: self._write(keycodes.KC_NO))
+        quick.append(self.transparent_btn)
+        quick.append(self.clear_btn)
         actions.add(quick)
         actions.add(label(
             "Transparent passes the key through to the layer below. Clear disables it.",
@@ -255,6 +255,9 @@ class KeymapPage(Page):
         self.code_label.set_text(resolved.label)
         self.code_name.set_text(f"{resolved.name} · {code:#06x}")
         self.change.set_sensitive(bool(state.writable))
+        if hasattr(self, "transparent_btn"):
+            self.transparent_btn.set_sensitive(bool(state.writable))
+            self.clear_btn.set_sensitive(bool(state.writable))
 
     def _open_picker(self) -> None:
         if not self.selected:

@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 APP_ID = "io.github.madlionscontrol.MadlionsControl"
 APP_NAME = "Madlions Control"
 APP_SLUG = "madlions-control"
@@ -38,10 +38,6 @@ def config_dir() -> Path:
     return _xdg("XDG_CONFIG_HOME", Path.home() / ".config") / APP_SLUG
 
 
-def state_dir() -> Path:
-    return _xdg("XDG_STATE_HOME", Path.home() / ".local" / "state") / APP_SLUG
-
-
 def profiles_dir() -> Path:
     env = os.environ.get("MADLIONS_CONTROL_PROFILES")
     if env:
@@ -55,11 +51,6 @@ def backups_dir() -> Path:
 
 def settings_path() -> Path:
     return config_dir() / "settings.json"
-
-
-def ensure_dirs() -> None:
-    for path in (config_dir(), profiles_dir(), backups_dir()):
-        path.mkdir(parents=True, exist_ok=True)
 
 
 def is_flatpak() -> bool:

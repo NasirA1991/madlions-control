@@ -453,6 +453,27 @@ class MadlionsDevice:
         payload[6] = count & 0xFF
         return build_report(CMD_GET_KEYBOARD_VALUE, bytes(payload))
 
+    def _bulk_reply_data(
+        self, reply: bytes, offset: int, count: int, entry_size: int, what: str
+    ) -> bytes:
+        """Validate a bulk reply's header and exact payload length."""
+        if len(reply) < 8:
+            raise ProtocolError(f"{what} returned a short reply")
+        echoed_offset = int.from_bytes(reply[5:7], "big")
+        echoed_count = reply[7]
+        if echoed_offset != offset or echoed_count != count:
+            raise ProtocolError(
+                f"{what} replied for offset {echoed_offset}, count {echoed_count}; "
+                f"expected offset {offset}, count {count}"
+            )
+        span = count * entry_size
+        data = reply[8:8 + span]
+        if len(data) != span:
+            raise ProtocolError(
+                f"{what} returned {len(data)} payload bytes, expected {span}"
+            )
+        return data
+
     def read_buffer(self, cmd: int, size: int, base: int = 0) -> bytes:
         data = bytearray()
         while len(data) < size:
@@ -465,10 +486,23 @@ class MadlionsDevice:
             reply = self._ask(report, cmd)
             if len(reply) < 4:
                 raise ProtocolError(f"{cmd:#04x} returned a short buffer reply")
+            echoed_offset = int.from_bytes(reply[1:3], "big")
             chunk_size = reply[3]
+            if echoed_offset != offset:
+                raise ProtocolError(
+                    f"{cmd:#04x} replied for offset {echoed_offset:#06x}, "
+                    f"expected {offset:#06x}"
+                )
+            if chunk_size == 0 or len(reply) < 4 + chunk_size:
+                raise ProtocolError(
+                    f"{cmd:#04x} returned no usable data at {offset:#06x}"
+                )
             chunk = reply[4:4 + chunk_size]
-            if not chunk:
-                raise ProtocolError(f"{cmd:#04x} returned no data at {offset:#06x}")
+            if len(chunk) < want:
+                raise ProtocolError(
+                    f"{cmd:#04x} returned {len(chunk)} bytes at {offset:#06x}, "
+                    f"expected {want}"
+                )
             data += chunk[:want]
         return bytes(data[:size])
 
@@ -516,7 +550,9 @@ class MadlionsDevice:
                 CMD_GET_KEYBOARD_VALUE,
                 bytes([CUSTOM_CHANNEL, V_CALIBRATION_STATUS]),
             )
-            out.extend(reply[8:8 + want])
+            out.extend(self._bulk_reply_data(
+                reply, len(out), want, 1, "calibration status"
+            ))
         return out[:total]
 
     def populated_mask(self) -> list[bool]:
@@ -539,12 +575,11 @@ class MadlionsDevice:
                 CMD_GET_KEYBOARD_VALUE,
                 bytes([CUSTOM_CHANNEL, V_BULK_ACTUATION]),
             )
-            span = want * 2
-            data = reply[8:8 + span]
-            if len(data) < span:
-                raise ProtocolError("short actuation reply")
+            data = self._bulk_reply_data(
+                reply, len(values), want, 2, "actuation"
+            )
             values.extend(travel_from_raw(int.from_bytes(data[i:i + 2], "big"))
-                          for i in range(0, span, 2))
+                          for i in range(0, len(data), 2))
         return values[:total]
 
     def read_rapid_trigger(self) -> list[RapidTrigger]:
@@ -557,11 +592,10 @@ class MadlionsDevice:
                 CMD_GET_KEYBOARD_VALUE,
                 bytes([CUSTOM_CHANNEL, V_BULK_RT]),
             )
-            span = want * 5
-            data = reply[8:8 + span]
-            if len(data) < span:
-                raise ProtocolError("short rapid-trigger reply")
-            for i in range(0, span, 5):
+            data = self._bulk_reply_data(
+                reply, len(values), want, 5, "rapid trigger"
+            )
+            for i in range(0, len(data), 5):
                 values.append(
                     RapidTrigger(
                         enabled=bool(data[i]),
@@ -660,20 +694,34 @@ class MadlionsDevice:
         count = MAX_COLORS if count is None else min(count, MAX_COLORS)
         reply = self._ask_custom(CMD_CUSTOM_GET_VALUE, V_GET_KEY_COLOR,
                                  bytes([row, col, count]))
-        out = []
-        for index in range(count):
-            offset = 5 + index * 3
-            if offset + 3 > len(reply):
-                break
-            out.append((reply[offset], reply[offset + 1], reply[offset + 2]))
-        return out
+        if len(reply) < 5:
+            raise ProtocolError("short per-key colour reply")
+        if reply[1] != V_GET_KEY_COLOR or reply[2] != row or reply[3] != col or reply[4] != count:
+            raise ProtocolError(
+                "per-key colour reply did not echo the requested row, column and count"
+            )
+        span = count * 3
+        data = reply[5:5 + span]
+        if len(data) != span:
+            raise ProtocolError(
+                f"per-key colour reply had {len(data)} payload bytes, expected {span}"
+            )
+        return [
+            (data[index], data[index + 1], data[index + 2])
+            for index in range(0, span, 3)
+        ]
 
     def read_all_key_colors(self) -> list[tuple[int, int, int]]:
         colors: list[tuple[int, int, int]] = []
         while len(colors) < self.board.total_keys:
             row, col = divmod(len(colors), self.board.cols)
             want = min(MAX_COLORS, self.board.total_keys - len(colors))
-            colors.extend(self.read_key_colors(row, col, want))
+            chunk = self.read_key_colors(row, col, want)
+            if len(chunk) != want:
+                raise ProtocolError(
+                    f"per-key colour read returned {len(chunk)} of {want} colours"
+                )
+            colors.extend(chunk)
         return colors[:self.board.total_keys]
 
     def write_key_colors(
@@ -934,11 +982,8 @@ class MadlionsDevice:
                     last_error = exc
             else:
                 raise last_error or ProtocolError("telemetry read failed")
-            span = want * 2
-            data = reply[8:8 + span]
-            if len(data) < span:
-                raise ProtocolError("short telemetry reply")
-            values.extend(int.from_bytes(data[i:i + 2], "big") for i in range(0, span, 2))
+            data = self._bulk_reply_data(reply, len(values), want, 2, "telemetry")
+            values.extend(int.from_bytes(data[i:i + 2], "big") for i in range(0, len(data), 2))
         return values
 
     def read_adc(self) -> list[int]:

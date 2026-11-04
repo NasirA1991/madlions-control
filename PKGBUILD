@@ -1,6 +1,6 @@
 # Maintainer: Nasir A. <112448715+NasirA1991@users.noreply.github.com>
 pkgname=madlions-control
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=1
 pkgdesc="Native GTK4/libadwaita configuration tool for MADLIONS magnetic-switch keyboards"
 arch=('any')

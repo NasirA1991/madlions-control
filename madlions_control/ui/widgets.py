@@ -312,7 +312,7 @@ class Page(Gtk.ScrolledWindow):
     def __init__(self, window, *, max_width: int = 980, spacing: int = 16) -> None:
         super().__init__()
         self.window = window
-        self.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         self.add_css_class("page-scroll")
         self.set_vexpand(True)
         self.body = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=spacing)

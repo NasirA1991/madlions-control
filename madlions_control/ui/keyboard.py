@@ -86,6 +86,12 @@ class KeyboardCanvas(Gtk.DrawingArea):
         self.per_key = False
         self._on_key = on_key
         self._interactive = interactive
+        self._focused = (0, 0)
+        self.set_focusable(interactive)
+        if interactive:
+            keys = Gtk.EventControllerKey()
+            keys.connect("key-pressed", self._key_pressed)
+            self.add_controller(keys)
         if not os.environ.get("MADLIONS_NO_TOOLTIPS"):
             self.set_has_tooltip(True)
             self.connect("query-tooltip", self._query_tooltip)
@@ -194,9 +200,8 @@ class KeyboardCanvas(Gtk.DrawingArea):
                 if self.mode == "lighting":
                     if self.per_key and theme.colors:
                         idx = key.row * theme.board.cols + key.col
-                        base = theme.colors[idx] if idx < len(theme.colors) else (0, 0, 0)
-                        if base == (0, 0, 0):
-                            base = self.preview_color
+                        base = (theme.colors[idx] if idx < len(theme.colors)
+                                else self.preview_color)
                     else:
                         base = self.preview_color
                     fill_top = tuple(value / 255 for value in base)
@@ -263,6 +268,13 @@ class KeyboardCanvas(Gtk.DrawingArea):
                     cr.set_source_rgba(1.0, 0.30, 0.42, 0.92)
                     cr.set_line_width(2)
                     cr.stroke()
+                if self.has_focus() and (key.row, key.col) == self._focused:
+                    cr.set_dash([3, 2])
+                    _rounded(cr, x - 4, y - 4, w + 8, key_h + 8, min(9, key_h * 0.24))
+                    cr.set_source_rgba(1.0, 1.0, 1.0, 0.65)
+                    cr.set_line_width(1.4)
+                    cr.stroke()
+                    cr.set_dash([])
 
                 if self.mode == "live" and press > 0.02:
                     # A fill from the bottom makes the analogue travel legible.
@@ -313,10 +325,55 @@ class KeyboardCanvas(Gtk.DrawingArea):
             if cursor <= x <= cursor + w:
                 state = gesture.get_current_event_state()
                 ctrl = bool(state & Gdk.ModifierType.CONTROL_MASK)
+                self._focused = (key.row, key.col)
+                self.grab_focus()
                 if self._on_key:
                     self._on_key(key.row, key.col, ctrl)
                 return
             cursor += w + gap
+
+    def _physical_keys(self) -> list:
+        return sorted(
+            layout.keys_for(self.state.board),
+            key=lambda key: (key.row, key.col),
+        )
+
+    def _key_pressed(self, _controller, keyval: int, _keycode: int, state) -> bool:
+        keys = self._physical_keys()
+        if not keys:
+            return False
+        current = next(
+            (key for key in keys if (key.row, key.col) == self._focused),
+            keys[0],
+        )
+        if keyval in (Gdk.KEY_Left, Gdk.KEY_Right, Gdk.KEY_Up, Gdk.KEY_Down):
+            if keyval in (Gdk.KEY_Left, Gdk.KEY_Right):
+                candidates = [key for key in keys if key.row == current.row]
+                candidates.sort(key=lambda key: key.col, reverse=keyval == Gdk.KEY_Left)
+                target = next(
+                    (key for key in candidates
+                     if (key.col < current.col if keyval == Gdk.KEY_Left
+                         else key.col > current.col)),
+                    current,
+                )
+            else:
+                candidates = [key for key in keys if key.col == current.col]
+                candidates.sort(key=lambda key: key.row, reverse=keyval == Gdk.KEY_Up)
+                target = next(
+                    (key for key in candidates
+                     if (key.row < current.row if keyval == Gdk.KEY_Up
+                         else key.row > current.row)),
+                    current,
+                )
+            self._focused = (target.row, target.col)
+            self.queue_draw()
+            return True
+        if keyval in (Gdk.KEY_space, Gdk.KEY_Return, Gdk.KEY_KP_Enter):
+            ctrl = bool(state & Gdk.ModifierType.CONTROL_MASK)
+            if self._on_key:
+                self._on_key(current.row, current.col, ctrl)
+            return True
+        return False
 
     def _query_tooltip(self, _widget, x: int, y: int, _keyboard, tooltip: Gtk.Tooltip) -> bool:
         rows, gap, unit, key_h, _bw, _bh, x0, y0 = self._geometry(self.get_width(), self.get_height())

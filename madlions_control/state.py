@@ -184,10 +184,14 @@ def load_basic(device: MadlionsDevice, *, include_light: bool = True) -> Keyboar
     return state
 
 
-def load_colors(device: MadlionsDevice, state: KeyboardState) -> KeyboardState:
+def load_colors(
+    device: MadlionsDevice, state: KeyboardState, *, strict: bool = False
+) -> KeyboardState:
     try:
         return replace(state, colors=device.read_all_key_colors())
     except Exception as exc:  # noqa: BLE001
+        if strict:
+            raise
         state.warnings.append(f"per-key colours: {exc}")
         return state
 
