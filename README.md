@@ -20,10 +20,10 @@
 
 ## Quick install
 
-**Arch, CachyOS or EndeavourOS:**
+**Arch, CachyOS or EndeavourOS:** use `paru` or `yay`:
 
 ```bash
-paru -S madlions-control
+paru -S madlions-control   # or: yay -S madlions-control
 ```
 
 **Other distributions:** download the latest AppImage or Flatpak from the
@@ -129,9 +129,12 @@ Every release includes an AppImage, a Flatpak bundle and the source tarball. The
 
 ### Arch, CachyOS, EndeavourOS (AUR)
 
+Use `paru`, `yay` or any other AUR helper:
+
 ```bash
 paru -S madlions-control       # latest tagged release
 paru -S madlions-control-git   # latest main, rebuilt on updates
+# yay -S madlions-control      # same, if you use yay
 ```
 
 The packages install the application, the desktop entry, the icon and the udev
