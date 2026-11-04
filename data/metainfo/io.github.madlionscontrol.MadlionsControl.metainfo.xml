@@ -48,6 +48,16 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.3.0" date="2026-11-04">
+      <description>
+        <p>Fn shortcut cheatsheet.</p>
+        <ul>
+          <li>See the keyboard's current Fn-layer shortcuts, including lighting controls.</li>
+          <li>Generate the list from layer 1, so it matches the user's keymap.</li>
+          <li>Open the Keymap editor from the cheatsheet.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.0" date="2026-11-04">
       <description>
         <p>Scoped tuning reset.</p>

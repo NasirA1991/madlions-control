@@ -25,6 +25,7 @@ from .macros_page import MacrosPage
 from .overview import OverviewPage
 from .perkey import PerKeyPage
 from .profiles_page import ProfilesPage
+from .shortcuts import ShortcutsDialog
 from .test import TestPage
 from .widgets import StatusPill, copy_text, label, toast
 
@@ -105,6 +106,13 @@ class MainWindow(Adw.ApplicationWindow):
         pill_wrap.append(self.status_pill)
         header.pack_end(pill_wrap)
 
+        shortcuts = Gtk.Button()
+        shortcuts.set_child(Gtk.Image.new_from_icon_name("input-keyboard-symbolic"))
+        shortcuts.set_tooltip_text("Keyboard shortcuts")
+        shortcuts.add_css_class("flat")
+        shortcuts.connect("clicked", lambda _b: self.show_shortcuts())
+        header.pack_start(shortcuts)
+
         save = Gtk.Button()
         save.set_child(Gtk.Image.new_from_icon_name("document-save-symbolic"))
         save.set_tooltip_text("Save settings to the keyboard")
@@ -113,6 +121,7 @@ class MainWindow(Adw.ApplicationWindow):
         header.pack_start(save)
 
         menu = Gio.Menu()
+        menu.append("Keyboard shortcuts", "win.shortcuts")
         menu.append("Refresh from keyboard", "win.refresh")
         menu.append("Reset tuning…", "win.reset-tuning")
         menu.append("Device diagnostics", "win.diagnostics")
@@ -127,6 +136,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         for name, callback in (
             ("refresh", lambda: self.refresh()),
+            ("shortcuts", lambda: self.show_shortcuts()),
             ("reset-tuning", lambda: self.reset_tuning()),
             ("diagnostics", lambda: self.show_diagnostics()),
             ("permissions", lambda: self.show_permissions()),
@@ -337,6 +347,27 @@ class MainWindow(Adw.ApplicationWindow):
             error=lambda exc: self.notify(f"Lighting not saved: {exc}"),
             description="save lighting",
         )
+
+    def show_shortcuts(self) -> None:
+        if not self.state.connected:
+            self.notify("Connect a keyboard to read its Fn layer.")
+            return
+        if self.state.keymap:
+            ShortcutsDialog(
+                self.state, on_open_keymap=lambda: self.go("keymap")
+            ).present(self)
+            return
+        self.notify("Reading the keyboard's Fn layer…")
+
+        def done(loaded):
+            if loaded.keymap:
+                ShortcutsDialog(
+                    loaded, on_open_keymap=lambda: self.go("keymap")
+                ).present(self)
+            else:
+                self.notify("The keyboard returned no keymap.")
+
+        self.worker.refresh_keymap(callback=done)
 
     def reset_tuning(self) -> None:
         """Apply the verified volatile baseline for this board, after a snapshot."""

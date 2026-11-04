@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 APP_ID = "io.github.madlionscontrol.MadlionsControl"
 APP_NAME = "Madlions Control"
 APP_SLUG = "madlions-control"

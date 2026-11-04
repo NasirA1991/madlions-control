@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 — 2026-11-04
+
+### Added
+- **Keyboard shortcuts cheatsheet**, available from the main menu. It reads
+  layer 1 of the current keymap, so Fn combinations reflect the board rather
+  than a generic manual.
+- Known QMK lighting keycodes are labelled (Fn + Tab toggles RGB lighting,
+  Fn + W/S cycles effects, Fn + Q/A adjusts brightness, and so on).
+- The cheatsheet can open the Keymap editor directly.
+
 ## 0.2.0 — 2026-11-04
 
 ### Added

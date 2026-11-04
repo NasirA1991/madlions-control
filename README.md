@@ -76,6 +76,10 @@ feel of every single key**.
 - Ready-made **Rapid fire**, **Balanced** and **Typing** presets.
 - **Reset tuning** to the observed baseline for verified boards, without touching
   the keymap, macros, advanced keys or per-key colours.
+- **Fn shortcut cheatsheet** read from the keyboard's own layer 1 — lighting,
+  F-keys and any vendor-specific keys it contains.
+
+![Keyboard shortcuts](docs/screenshots/shortcuts.png)
 - Export, import and automatic tuning snapshots as readable JSON. Full backups
   also capture the keymap, macros and advanced bindings.
 - Command line (`madlionsctl`) for scripts, keybinds and status bars.
@@ -126,7 +130,7 @@ Download `madlions-control-<version>-x86_64.flatpak` from the
 [Releases page](https://github.com/NasirA1991/madlions-control/releases):
 
 ```bash
-flatpak install --user ./madlions-control-0.2.0-x86_64.flatpak
+flatpak install --user ./madlions-control-0.3.0-x86_64.flatpak
 flatpak run io.github.madlionscontrol.MadlionsControl
 ```
 
@@ -139,8 +143,8 @@ replug it.
 ### AppImage
 
 ```bash
-chmod +x madlions-control-0.2.0-x86_64.AppImage
-./madlions-control-0.2.0-x86_64.AppImage
+chmod +x madlions-control-0.3.0-x86_64.AppImage
+./madlions-control-0.3.0-x86_64.AppImage
 ```
 
 The AppImage uses the host's Python and GTK stack. Install it with:
@@ -205,6 +209,8 @@ same instructions.
 - **Test** — live analogue travel; click a key to follow it.
 - **Profiles** — save tuning setups, reset to the observed baseline, create a
   full restorable backup, apply a preset, export/import, or roll back.
+- **Keyboard shortcuts** — use the keyboard icon in the header, or the main
+  menu, to see the current Fn layer and its lighting controls.
 
 A small but important detail: almost everything on this keyboard is applied
 volatilely first, so experimenting costs no flash write endurance. **Save to
