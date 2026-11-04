@@ -20,13 +20,18 @@
 
 ![Overview](docs/screenshots/overview-0.3.2.png)
 
+**Quick start:** `paru -S madlions-control` on Arch/CachyOS, or download the
+latest AppImage/Flatpak from the [releases page](https://github.com/NasirA1991/madlions-control/releases).
+
+Jump to: [Features](#features) · [Supported keyboards](#supported-keyboards) · [Install](#install) · [CLI](#cli) · [Troubleshooting](#troubleshooting)
+
 ## Why
 
 The official MADLIONS configurator is a WebHID page that only runs in Chromium,
 needs a browser tab open, and treats Linux as an afterthought. Madlions Control
-talks to the keyboard's own HID interface directly. It is a small GTK4 /
-libadwaita application that starts instantly, works offline, and looks like it
-belongs on your desktop.
+talks to the keyboard's own HID interface directly. It is a native GTK4 /
+libadwaita application that starts in under a second, works offline, and looks
+like it belongs on your desktop.
 
 It is built around the thing these keyboards are actually for: **adjusting the
 feel of every single key**.
@@ -76,16 +81,15 @@ feel of every single key**.
 - Ready-made **Rapid fire**, **Balanced** and **Typing** presets.
 - **Reset tuning** to the observed baseline for verified boards, without touching
   the keymap, macros, advanced keys or per-key colours.
-- **Fn shortcut cheatsheet** read from the keyboard's own layer 1 — lighting,
+- **Fn shortcut cheatsheet** read from the layer Fn activates — lighting,
   F-keys and any vendor-specific keys it contains.
-
-![Keyboard shortcuts](docs/screenshots/shortcuts.png?v=2)
 - Export, import and automatic tuning snapshots as readable JSON. Full backups
   also capture the keymap, macros and advanced bindings.
 - Command line (`madlionsctl`) for scripts, keybinds and status bars.
 - Demo mode (`--demo`) to explore the app without a keyboard.
 - No tray daemon, no background service, no account, no telemetry.
 
+![Keyboard shortcuts](docs/screenshots/shortcuts.png?v=2)
 ![Profiles](docs/screenshots/profiles.png?v=2)
 
 ## Supported keyboards
@@ -130,7 +134,7 @@ Download `madlions-control-<version>-x86_64.flatpak` from the
 [Releases page](https://github.com/NasirA1991/madlions-control/releases):
 
 ```bash
-flatpak install --user ./madlions-control-0.3.2-x86_64.flatpak
+flatpak install --user ./madlions-control-*-x86_64.flatpak
 flatpak run io.github.madlionscontrol.MadlionsControl
 ```
 
@@ -143,8 +147,8 @@ replug it.
 ### AppImage
 
 ```bash
-chmod +x madlions-control-0.3.2-x86_64.AppImage
-./madlions-control-0.3.2-x86_64.AppImage
+chmod +x madlions-control-*-x86_64.AppImage
+./madlions-control-*-x86_64.AppImage
 ```
 
 The AppImage uses the host's Python and GTK stack. Install it with:
@@ -158,7 +162,8 @@ sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 python3-cairo hicolor-ic
 sudo dnf install python3-gobject gtk4 libadwaita python3-cairo hicolor-icon-theme
 ```
 
-The Flatpak bundles the app and its GNOME runtime; see the device-access note above.
+The Flatpak uses the GNOME runtime; Flatpak will install it if needed. See the
+device-access note above.
 
 ### From source
 
@@ -289,6 +294,11 @@ Use **Save to keyboard**. Keymap and macro edits are already persistent.
 **Flatpak cannot see the keyboard.**
 Install the host udev rule and replug the device; the Flatpak itself already has
 `--device=all`.
+
+**Window resizing snaps back on KDE.**
+KZones, Remember Window Positions and Sticky Window Snapping can override window
+geometry. Press `Meta+X`, or exclude
+`io.github.madlionscontrol.MadlionsControl` from KZones, then try again.
 
 ## What is not included
 
