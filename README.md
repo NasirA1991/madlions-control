@@ -74,6 +74,8 @@ feel of every single key**.
 
 - Save tuning profiles for everyday switching, or a full restorable backup in one click.
 - Ready-made **Rapid fire**, **Balanced** and **Typing** presets.
+- **Reset tuning** to the observed baseline for verified boards, without touching
+  the keymap, macros, advanced keys or per-key colours.
 - Export, import and automatic tuning snapshots as readable JSON. Full backups
   also capture the keymap, macros and advanced bindings.
 - Command line (`madlionsctl`) for scripts, keybinds and status bars.
@@ -124,7 +126,7 @@ Download `madlions-control-<version>-x86_64.flatpak` from the
 [Releases page](https://github.com/NasirA1991/madlions-control/releases):
 
 ```bash
-flatpak install --user ./madlions-control-0.1.1-x86_64.flatpak
+flatpak install --user ./madlions-control-0.2.0-x86_64.flatpak
 flatpak run io.github.madlionscontrol.MadlionsControl
 ```
 
@@ -137,8 +139,8 @@ replug it.
 ### AppImage
 
 ```bash
-chmod +x madlions-control-0.1.1-x86_64.AppImage
-./madlions-control-0.1.1-x86_64.AppImage
+chmod +x madlions-control-0.2.0-x86_64.AppImage
+./madlions-control-0.2.0-x86_64.AppImage
 ```
 
 The AppImage uses the host's Python and GTK stack. Install it with:
@@ -201,8 +203,8 @@ same instructions.
 - **Macros** — build a sequence, then save it to one of sixteen slots.
 - **Advanced** — switches, dead band and the keyboard's smart-key bindings.
 - **Test** — live analogue travel; click a key to follow it.
-- **Profiles** — save tuning setups, create a full restorable backup, apply a
-  preset, export/import, or roll back.
+- **Profiles** — save tuning setups, reset to the observed baseline, create a
+  full restorable backup, apply a preset, export/import, or roll back.
 
 A small but important detail: almost everything on this keyboard is applied
 volatilely first, so experimenting costs no flash write endurance. **Save to
@@ -225,6 +227,7 @@ madlionsctl profile apply "Rapid fire"
 madlionsctl profile save "My setup"
 madlionsctl profile backup --full
 madlionsctl profile apply "Full backup ..." --persistent
+madlionsctl reset-tuning
 madlionsctl report --json
 ```
 
@@ -245,6 +248,10 @@ any command uses a simulated keyboard.
   `profiles/backups` and keep the last ten. Full backups also live there and
   include the keymap, macros and advanced bindings. Restoring those persistent
   sections asks for confirmation first.
+- **Scoped reset.** Reset tuning restores only volatile tuning for a verified
+  board, saves a snapshot first, and never touches the keymap, macros, advanced
+  keys, per-key colours or calibration. A true factory reset is deliberately not
+  offered because no verified reset command exists.
 - **No firmware flashing.** Firmware update / DFU and Hall-sensor calibration are
   deliberately left to the official tool. A bad calibration is the one thing
   that can make a magnetic board feel wrong.

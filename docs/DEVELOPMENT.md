@@ -86,6 +86,7 @@ madlions_control/
   state.py           UI state model and lazy loaders
   worker.py          single I/O thread, job queue, 60 Hz test stream
   profiles.py        JSON profiles, presets, backups, apply
+  baseline.py        verified per-board tuning reset, with read-back checks
   macros_codec.py    VIA/Vial macro buffer codec
   lighting.py        effect metadata and colour helpers
   ui/                GTK pages and the Cairo keyboard widget

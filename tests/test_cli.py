@@ -37,6 +37,12 @@ class ParserTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             cli.build_parser().parse_args(["features", "--mac", "--no-mac"])
 
+    def test_reset_tuning_parser(self):
+        args = cli.build_parser().parse_args(["reset-tuning"])
+        self.assertEqual(args.func, cli.cmd_reset_tuning)
+        args = cli.build_parser().parse_args(["reset-tuning", "--save"])
+        self.assertTrue(args.save)
+
     def test_key_parser(self):
         self.assertEqual(cli._parse_key("2,1"), (2, 1))
         with self.assertRaises(argparse.ArgumentTypeError):

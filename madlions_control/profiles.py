@@ -886,7 +886,12 @@ def ensure_default() -> None:
     ).save(directory)
 
 
-def auto_backup(state: KeyboardState, directory: Path | None = None) -> Path | None:
+def auto_backup(
+    state: KeyboardState,
+    directory: Path | None = None,
+    *,
+    description: str = "Automatic tuning snapshot (not a full backup)",
+) -> Path | None:
     """Save a tuning snapshot.  This is deliberately not a full backup."""
     if not state.connected or not state.actuation:
         return None
@@ -894,8 +899,7 @@ def auto_backup(state: KeyboardState, directory: Path | None = None) -> Path | N
     directory.mkdir(parents=True, exist_ok=True)
     stamp = f"{time.strftime('%Y%m%d-%H%M%S')}-{time.time_ns() % 1_000_000:06d}"
     profile = Profile.capture(
-        state, f"backup-{stamp}",
-        "Automatic tuning snapshot (not a full backup)", full=False,
+        state, f"backup-{stamp}", description, full=False,
     )
     path = profile.save(directory)
     backups = sorted(directory.glob("backup-*.json"))

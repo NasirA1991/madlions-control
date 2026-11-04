@@ -15,7 +15,7 @@ gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
-from .. import config, profiles, settings, transport
+from .. import baseline, config, profiles, settings, transport
 from ..state import KeyboardState
 from ..worker import DeviceWorker
 from .advanced import AdvancedPage
@@ -66,6 +66,7 @@ class MainWindow(Adw.ApplicationWindow):
         self._nav_rows: dict[str, NavRow] = {}
         self._current_page = ""
         self._auto_backed_up = False
+        self._reset_busy = False
         self._settings = settings.load()
         self.set_default_size(self._settings.window_width, self._settings.window_height)
         self.set_title(config.APP_NAME)
@@ -113,6 +114,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         menu = Gio.Menu()
         menu.append("Refresh from keyboard", "win.refresh")
+        menu.append("Reset tuning…", "win.reset-tuning")
         menu.append("Device diagnostics", "win.diagnostics")
         menu.append("Permissions", "win.permissions")
         menu.append("Appearance", "win.appearance")
@@ -125,6 +127,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         for name, callback in (
             ("refresh", lambda: self.refresh()),
+            ("reset-tuning", lambda: self.reset_tuning()),
             ("diagnostics", lambda: self.show_diagnostics()),
             ("permissions", lambda: self.show_permissions()),
             ("appearance", lambda: self.show_appearance()),
@@ -334,6 +337,79 @@ class MainWindow(Adw.ApplicationWindow):
             error=lambda exc: self.notify(f"Lighting not saved: {exc}"),
             description="save lighting",
         )
+
+    def reset_tuning(self) -> None:
+        """Apply the verified volatile baseline for this board, after a snapshot."""
+        if self._reset_busy:
+            self.notify("A baseline reset is already running.")
+            return
+        if not self.state.connected:
+            self.notify("No keyboard connected.")
+            return
+        if not self.state.writable:
+            self.notify("The session is read-only. Fix permissions first.")
+            return
+        baseline_spec = baseline.for_board(self.state.board)
+        if baseline_spec is None:
+            self.notify(
+                f"No verified tuning baseline is available for {self.state.board.name}."
+            )
+            return
+        body = (
+            "\n".join(baseline_spec.preview_lines())
+            + "\n\nThis does not touch the keymap, macros, advanced keys, "
+              "hold/click, DKS or per-key colours."
+            + "\nA tuning snapshot is saved automatically before the reset."
+            + "\nChanges are volatile until you use Save to keyboard."
+        )
+        dialog = Adw.AlertDialog(heading="Reset tuning to baseline?", body=body)
+        dialog.add_response("cancel", "Cancel")
+        dialog.add_response("reset", "Reset")
+        dialog.set_response_appearance("reset", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.set_default_response("cancel")
+        dialog.set_close_response("cancel")
+
+        def response(_dialog, response_id):
+            if response_id == "reset":
+                self._reset_tuning_now(baseline_spec)
+
+        dialog.connect("response", response)
+        dialog.present(self)
+
+    def _reset_tuning_now(self, baseline_spec) -> None:
+        if self._reset_busy:
+            return
+        try:
+            snapshot = profiles.auto_backup(
+                self.state,
+                description="Tuning snapshot taken automatically before a baseline reset",
+            )
+        except (OSError, ValueError) as exc:
+            self.notify(f"Could not create a safety snapshot: {exc}")
+            return
+        if snapshot is None:
+            self.notify("No tuning state to snapshot; reset cancelled.")
+            return
+        self._reset_busy = True
+        board = self.state.board
+
+        def job(device):
+            return baseline_spec.apply(device, board)
+
+        def done(_actions):
+            self._reset_busy = False
+            self.notify(
+                "Baseline applied. Tuning snapshot saved. "
+                "Changes are volatile until Save to keyboard."
+            )
+            self.refresh()
+
+        def error(exc):
+            self._reset_busy = False
+            self.notify(f"Reset did not complete: {exc}")
+            self.refresh()
+
+        self.worker.submit(job, callback=done, error=error, description="reset tuning")
 
     def apply_profile(self, profile) -> None:
         if not self.state.connected:

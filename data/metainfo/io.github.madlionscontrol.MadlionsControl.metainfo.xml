@@ -48,6 +48,16 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.2.0" date="2026-11-04">
+      <description>
+        <p>Scoped tuning reset.</p>
+        <ul>
+          <li>Reset actuation, rapid trigger, lighting, switches and dead band to the observed baseline.</li>
+          <li>Creates a tuning snapshot first and leaves persistent data untouched.</li>
+          <li>Available on verified boards with an observed baseline, from the Profiles page or the CLI.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.1" date="2026-11-04">
       <description>
         <p>Reliability and recovery hardening.</p>

@@ -677,8 +677,7 @@ class MadlionsDevice:
             brightness=reply[8],
         )
 
-    def write_light(self, light: LightInfo) -> None:
-        self._guard("changing lighting")
+    def _write_light_payload(self, light: LightInfo) -> None:
         payload = bytes([
             light.effect & 0xFF,
             0,
@@ -689,6 +688,22 @@ class MadlionsDevice:
             min(light.brightness, BRIGHTNESS_MAX),
         ])
         self._ask_custom(CMD_CUSTOM_SET_VALUE, V_LIGHT_INFO, payload)
+
+    def write_light(self, light: LightInfo) -> None:
+        self._guard("changing lighting")
+        # This firmware ignores colour/brightness writes while the effect is
+        # Off.  Stage a visible effect with the target values and then turn it
+        # off, otherwise an Off -> Off brightness/colour edit is lost.
+        if light.effect == 0:
+            self._write_light_payload(LightInfo(
+                effect=2,
+                speed=light.speed,
+                r=light.r,
+                g=light.g,
+                b=light.b,
+                brightness=light.brightness,
+            ))
+        self._write_light_payload(light)
 
     def read_key_colors(self, row: int = 0, col: int = 0, count: int | None = None) -> list[tuple[int, int, int]]:
         count = MAX_COLORS if count is None else min(count, MAX_COLORS)

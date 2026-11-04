@@ -13,7 +13,7 @@ gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gio, Gtk  # noqa: E402
 
-from .. import config, profiles
+from .. import baseline, config, profiles
 from .widgets import Page, Section, button, label, separator
 
 
@@ -67,6 +67,18 @@ class ProfilesPage(Page):
         self.saved.add(self.saved_rows)
         self.add(self.saved)
 
+        self.reset_button = button("Reset tuning…", icon="edit-undo-symbolic")
+        self.reset_button.connect("clicked", lambda _b: self.window.reset_tuning())
+        self.baseline_note = label("", "row-sub", wrap=True)
+        self.baseline_card = Section(
+            "Baseline",
+            "Recover the observed baseline tuning for this model without touching "
+            "the keymap, macros, advanced keys or per-key colours.",
+            trailing=self.reset_button,
+        )
+        self.baseline_card.add(self.baseline_note)
+        self.add(self.baseline_card)
+
         backups = Section(
             "Backups",
             "A full backup also contains the keymap, macros and advanced bindings. "
@@ -113,6 +125,25 @@ class ProfilesPage(Page):
 
     # -- state -------------------------------------------------------------
     def on_state(self, state) -> None:
+        baseline_spec = baseline.for_board(state.board)
+        if baseline_spec is None:
+            self.baseline_note.set_text(
+                "No verified baseline is available for this model. Nothing is "
+                "written by this action."
+            )
+            self.reset_button.set_sensitive(False)
+        elif not state.writable:
+            self.baseline_note.set_text(
+                f"{baseline_spec.label}. The session is read-only, so the reset "
+                "is disabled."
+            )
+            self.reset_button.set_sensitive(False)
+        else:
+            self.baseline_note.set_text(
+                f"{baseline_spec.label}. A tuning snapshot is created first; "
+                "persistent sections and per-key colours are left untouched."
+            )
+            self.reset_button.set_sensitive(True)
         self._rebuild()
 
     def on_show(self) -> None:

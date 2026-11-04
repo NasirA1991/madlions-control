@@ -2,6 +2,7 @@ import unittest
 
 from madlions_control import boards
 from madlions_control.device import (
+    LightInfo,
     MadlionsDevice,
     RapidTrigger,
     WriteBlocked,
@@ -136,6 +137,20 @@ class DeviceProtocolTests(unittest.TestCase):
         self.assertTrue(any(report[0] == 0x07 and report[1] == 0x41 for report in transport.writes))
         device.write_features(device.read_features())
         self.assertTrue(any(report[0] == 0x03 and report[2] == 0x11 for report in transport.writes))
+
+    def test_off_light_stages_visible_effect(self):
+        device, transport = self._device()
+        device.write_light(LightInfo(effect=0, speed=127, r=7, g=30, b=29,
+                                     brightness=103))
+        reports = [report for report in transport.writes
+                   if report[0] == 0x07 and report[1] == 0x41]
+        self.assertEqual(len(reports), 2)
+        self.assertEqual(reports[0][2], 2)
+        self.assertEqual(reports[1][2], 0)
+        for report in reports:
+            self.assertEqual(report[4], 127)
+            self.assertEqual(tuple(report[5:8]), (7, 30, 29))
+            self.assertEqual(report[8], 103)
 
     def test_unverified_board_is_read_only(self):
         unknown = boards.BoardSpec(0x9999, "Unknown", verified=False)

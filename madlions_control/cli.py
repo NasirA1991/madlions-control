@@ -8,7 +8,7 @@ import math
 import sys
 from pathlib import Path
 
-from . import boards, config, layout, profiles, state as state_mod
+from . import baseline, boards, config, layout, profiles, state as state_mod
 from .demo import DemoBackend
 from .device import (
     AdvancedKey,
@@ -364,6 +364,32 @@ def cmd_features(args) -> int:
         device.close()
 
 
+def cmd_reset_tuning(args) -> int:
+    device, loaded = _open_device(args)
+    try:
+        spec = baseline.require(loaded.board)
+        snapshot = profiles.auto_backup(
+            loaded,
+            description="Tuning snapshot taken automatically before a CLI baseline reset",
+        )
+        if snapshot is None:
+            print("error: no tuning state to snapshot; reset cancelled", file=sys.stderr)
+            return 1
+        actions = spec.apply(device, loaded.board)
+        if args.save:
+            device.commit()
+            try:
+                device.save_lighting()
+            except Exception:
+                pass
+        print(f"applied {spec.label}: {', '.join(actions)}")
+        print(f"snapshot: {snapshot}")
+        print("volatile baseline applied" + (" and saved" if args.save else " (not saved)"))
+        return 0
+    finally:
+        device.close()
+
+
 def cmd_profile(args) -> int:
     if args.profile_action == "list":
         for profile in profiles.list_profiles():
@@ -552,6 +578,10 @@ def build_parser() -> argparse.ArgumentParser:
     features.add_argument("--game", type=_range_int(0, 255))
     features.add_argument("--bottom", type=_range_int(0, 255))
     features.set_defaults(func=cmd_features)
+
+    reset = sub.add_parser("reset-tuning", help="reset volatile tuning to the board baseline")
+    reset.add_argument("--save", action="store_true", help="persist the reset to keyboard flash")
+    reset.set_defaults(func=cmd_reset_tuning)
 
     profile = sub.add_parser("profile", help="manage profiles")
     profile_sub = profile.add_subparsers(dest="profile_action", required=True)

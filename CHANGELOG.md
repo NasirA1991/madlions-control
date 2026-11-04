@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 — 2026-11-04
+
+### Added
+- **Reset tuning** on verified boards with an observed baseline. It resets
+  actuation, rapid trigger, lighting, switches and dead band, creates a tuning
+  snapshot first, and deliberately leaves keymap, macros, advanced keys,
+  hold/click, DKS, per-key colours and calibration untouched.
+- `madlionsctl reset-tuning`, with the same safety scope.
+
 ## 0.1.1 — 2026-11-04
 
 Reliability and recovery hardening.
