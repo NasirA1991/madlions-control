@@ -18,7 +18,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
 </p>
 
-![Overview](docs/screenshots/overview.png)
+![Overview](docs/screenshots/overview.png?v=2)
 
 ## Why
 
@@ -41,7 +41,7 @@ feel of every single key**.
 - Colour heat map shows the actuation value of every cap.
 - Changes apply live; **Save to keyboard** is the only thing that writes flash.
 
-![Per-key](docs/screenshots/per-key.png)
+![Per-key](docs/screenshots/per-key.png?v=2)
 
 ### Live analogue test
 
@@ -50,7 +50,7 @@ feel of every single key**.
 - A real measurement tool: spot a noisy switch, check a threshold, or just watch
   your typing.
 
-![Test](docs/screenshots/test.png)
+![Test](docs/screenshots/test.png?v=2)
 
 ### Lighting
 
@@ -58,7 +58,7 @@ feel of every single key**.
   belts, spectrum, digital rain and fingertip rainbow.
 - Brightness, speed, colour, and per-key RGB painting.
 
-![Lighting](docs/screenshots/lighting.png)
+![Lighting](docs/screenshots/lighting.png?v=2)
 
 ### Keymap, macros and advanced keys
 
@@ -68,7 +68,7 @@ feel of every single key**.
 - NKRO, Windows-key lock, WASD/arrow swap, macOS layout, game mode, bottom-out
   optimisation and dead-band controls.
 
-![Keymap](docs/screenshots/keymap.png)
+![Keymap](docs/screenshots/keymap.png?v=2)
 
 ### Profiles and everyday conveniences
 
@@ -79,14 +79,14 @@ feel of every single key**.
 - **Fn shortcut cheatsheet** read from the keyboard's own layer 1 — lighting,
   F-keys and any vendor-specific keys it contains.
 
-![Keyboard shortcuts](docs/screenshots/shortcuts.png)
+![Keyboard shortcuts](docs/screenshots/shortcuts.png?v=2)
 - Export, import and automatic tuning snapshots as readable JSON. Full backups
   also capture the keymap, macros and advanced bindings.
 - Command line (`madlionsctl`) for scripts, keybinds and status bars.
 - Demo mode (`--demo`) to explore the app without a keyboard.
 - No tray daemon, no background service, no account, no telemetry.
 
-![Profiles](docs/screenshots/profiles.png)
+![Profiles](docs/screenshots/profiles.png?v=2)
 
 ## Supported keyboards
 
