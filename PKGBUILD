@@ -8,6 +8,7 @@ url="https://github.com/NasirA1991/madlions-control"
 license=('MIT')
 depends=('python' 'python-gobject' 'gtk4' 'libadwaita' 'python-cairo' 'hicolor-icon-theme')
 options=('!strip')
+# Local build from this checkout; there is no remote source to checksum.
 source=()
 sha256sums=()
 

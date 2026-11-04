@@ -138,7 +138,8 @@ paru -S madlions-control-git   # latest main, rebuilt on updates
 ```
 
 The packages install the application, the desktop entry, the icon and the udev
-rule.
+rule. The stable package verifies the release tarball's SHA-256; the `-git`
+package follows `main`, so it uses Arch's standard `SKIP` for VCS sources.
 
 ### Flatpak
 
