@@ -18,12 +18,21 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
 </p>
 
+## Quick install
+
+**Arch, CachyOS or EndeavourOS:**
+
+```bash
+paru -S madlions-control
+```
+
+**Other distributions:** download the latest AppImage or Flatpak from the
+[releases page](https://github.com/NasirA1991/madlions-control/releases), or see
+the full [Installation](#installation) section for dependencies and source installs.
+
+**On this page:** [Features](#features) · [Supported keyboards](#supported-keyboards) · [Installation](#installation) · [CLI](#cli) · [Troubleshooting](#troubleshooting)
+
 ![Overview](docs/screenshots/overview-0.3.2.png)
-
-**Quick start:** `paru -S madlions-control` on Arch/CachyOS, or download the
-latest AppImage/Flatpak from the [releases page](https://github.com/NasirA1991/madlions-control/releases).
-
-Jump to: [Features](#features) · [Supported keyboards](#supported-keyboards) · [Install](#install) · [CLI](#cli) · [Troubleshooting](#troubleshooting)
 
 ## Why
 
@@ -114,7 +123,7 @@ read-only, so you can inspect it safely. If you have one of these boards, a
 [device report](https://github.com/NasirA1991/madlions-control/issues/new?template=device-report.yml)
 helps add it properly.
 
-## Install
+## Installation
 
 Every release includes an AppImage, a Flatpak bundle and the source tarball. The AUR packages are available separately.
 
