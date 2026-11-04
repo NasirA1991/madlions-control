@@ -1,0 +1,36 @@
+app-id: io.github.madlionscontrol.MadlionsControl
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: madlions-control
+
+finish-args:
+  # GTK4 / Wayland
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  # Vendor HID collection (/dev/hidraw*)
+  - --device=all
+
+modules:
+  - name: madlions-control
+    buildsystem: simple
+    build-commands:
+      - install -d /app/lib/madlions-control
+      - cp -r madlions_control data /app/lib/madlions-control/
+      - find /app/lib/madlions-control -name __pycache__ -type d -prune -exec rm -rf {} +
+      - install -Dm755 packaging/flatpak/madlions-control.sh /app/bin/madlions-control
+      - install -Dm644 packaging/flatpak/launcher.py /app/lib/madlions-control/launcher.py
+      - install -Dm644 data/io.github.madlionscontrol.MadlionsControl.desktop
+        /app/share/applications/io.github.madlionscontrol.MadlionsControl.desktop
+      - install -Dm644 data/metainfo/io.github.madlionscontrol.MadlionsControl.metainfo.xml
+        /app/share/metainfo/io.github.madlionscontrol.MadlionsControl.metainfo.xml
+      - install -Dm644 data/icons/hicolor/scalable/apps/io.github.madlionscontrol.MadlionsControl.svg
+        /app/share/icons/hicolor/scalable/apps/io.github.madlionscontrol.MadlionsControl.svg
+      - install -Dm644 data/icons/hicolor/256x256/apps/io.github.madlionscontrol.MadlionsControl.png
+        /app/share/icons/hicolor/256x256/apps/io.github.madlionscontrol.MadlionsControl.png
+      - install -Dm644 data/icons/hicolor/512x512/apps/io.github.madlionscontrol.MadlionsControl.png
+        /app/share/icons/hicolor/512x512/apps/io.github.madlionscontrol.MadlionsControl.png
+    sources:
+      - type: dir
+        path: ../..

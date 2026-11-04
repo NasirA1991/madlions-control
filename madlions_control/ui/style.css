@@ -1,0 +1,421 @@
+/* MADLIONS Control — a lean, dark-friendly shell around libadwaita. */
+
+@define-color accent_color #ff4d6d;
+@define-color accent_bg_color #e8365d;
+@define-color accent_fg_color #ffffff;
+
+window {
+  background: @window_bg_color;
+}
+
+.header-title {
+  font-weight: 800;
+}
+
+.header-subtitle {
+  font-size: 11px;
+  color: alpha(@window_fg_color, 0.55);
+}
+
+.connection-pill {
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: alpha(@window_fg_color, 0.07);
+  border: 1px solid alpha(@window_fg_color, 0.10);
+  font-size: 11px;
+  font-weight: 700;
+}
+.connection-pill.online {
+  background: alpha(#33d17a, 0.13);
+  border-color: alpha(#33d17a, 0.28);
+  color: #2ec27e;
+}
+.connection-pill.offline {
+  background: alpha(@error_color, 0.10);
+  border-color: alpha(@error_color, 0.25);
+  color: @error_color;
+}
+.connection-pill.waiting {
+  background: alpha(@warning_color, 0.12);
+  border-color: alpha(@warning_color, 0.26);
+  color: @warning_color;
+}
+
+.sidebar {
+  background: @sidebar_bg_color;
+  border-right: 1px solid alpha(@window_fg_color, 0.08);
+}
+
+.brand-box {
+  padding: 18px 16px 10px 16px;
+}
+.brand-name {
+  font-weight: 800;
+  font-size: 15px;
+}
+.brand-sub {
+  font-size: 10px;
+  color: alpha(@window_fg_color, 0.50);
+}
+.brand-icon {
+  border-radius: 11px;
+  background: linear-gradient(145deg, #ff4d6d, #9b2cff);
+  padding: 7px;
+  color: white;
+}
+
+.nav-list {
+  background: transparent;
+}
+.nav-row {
+  border-radius: 10px;
+  margin: 1px 9px;
+  padding: 1px 2px;
+  min-height: 38px;
+}
+.nav-row:hover {
+  background: alpha(@window_fg_color, 0.06);
+}
+.nav-row:selected,
+.nav-row.active {
+  background: alpha(@accent_bg_color, 0.14);
+}
+.nav-row.active image,
+.nav-row.active label {
+  color: @accent_color;
+}
+.nav-row.active label {
+  font-weight: 700;
+}
+.nav-label {
+  font-size: 13px;
+}
+
+.sidebar-footer {
+  padding: 8px 14px 12px 14px;
+}
+.mini-device {
+  background: alpha(@window_fg_color, 0.045);
+  border: 1px solid alpha(@window_fg_color, 0.08);
+  border-radius: 12px;
+  padding: 10px 11px;
+}
+.mini-device-title {
+  font-weight: 700;
+  font-size: 12px;
+}
+.mini-device-sub {
+  font-size: 10px;
+  color: alpha(@window_fg_color, 0.55);
+}
+
+.page-scroll {
+  background: @window_bg_color;
+}
+.page-body {
+  padding: 22px 28px 40px 28px;
+}
+
+.page-title {
+  font-size: 26px;
+  font-weight: 800;
+}
+.page-subtitle {
+  color: alpha(@window_fg_color, 0.62);
+  font-size: 13px;
+}
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+.muted {
+  color: alpha(@window_fg_color, 0.58);
+}
+.small {
+  font-size: 11px;
+}
+.tiny {
+  font-size: 10px;
+}
+.mono {
+  font-family: "JetBrains Mono", "Fira Code", "DejaVu Sans Mono", monospace;
+  font-size: 11px;
+}
+
+.card {
+  background: @card_bg_color;
+  border: 1px solid alpha(@window_fg_color, 0.085);
+  border-radius: 16px;
+  padding: 17px;
+}
+.card.tight {
+  padding: 12px 14px;
+}
+.card-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+.card-sub {
+  font-size: 11px;
+  color: alpha(@window_fg_color, 0.55);
+}
+
+.hero {
+  border-radius: 20px;
+  padding: 24px 26px;
+  color: #f7f7fb;
+  background: linear-gradient(135deg, #251528 0%, #16161c 48%, #0d0d11 100%);
+  border: 1px solid alpha(#ff4d6d, 0.28);
+}
+.hero-title {
+  font-size: 30px;
+  font-weight: 800;
+  color: #ffffff;
+}
+.hero-sub {
+  color: alpha(#ffffff, 0.66);
+  font-size: 13px;
+}
+.eyebrow {
+  color: #ff8fa3;
+  font-size: 10px;
+  font-weight: 800;
+}
+.hero-meta {
+  color: alpha(#ffffff, 0.62);
+  font-size: 11px;
+}
+
+.stat {
+  background: @card_bg_color;
+  border: 1px solid alpha(@window_fg_color, 0.085);
+  border-radius: 14px;
+  padding: 14px 15px;
+}
+.stat-value {
+  font-size: 24px;
+  font-weight: 800;
+}
+.stat-label {
+  font-size: 10px;
+  color: alpha(@window_fg_color, 0.53);
+}
+.stat-accent {
+  color: @accent_color;
+}
+
+.pill {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: alpha(@accent_bg_color, 0.12);
+  color: @accent_color;
+  font-size: 10px;
+  font-weight: 700;
+}
+.pill.gray {
+  background: alpha(@window_fg_color, 0.07);
+  color: alpha(@window_fg_color, 0.65);
+}
+.pill.green {
+  background: alpha(#33d17a, 0.12);
+  color: #2ec27e;
+}
+.pill.amber {
+  background: alpha(@warning_color, 0.12);
+  color: @warning_color;
+}
+.pill.red {
+  background: alpha(@error_color, 0.11);
+  color: @error_color;
+}
+
+.value-big {
+  font-size: 27px;
+  font-weight: 800;
+}
+.unit {
+  font-size: 12px;
+  color: alpha(@window_fg_color, 0.55);
+}
+
+.list-row {
+  padding: 10px 2px;
+}
+.row-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+.row-sub {
+  font-size: 11px;
+  color: alpha(@window_fg_color, 0.55);
+}
+
+.swatch {
+  min-width: 12px;
+  min-height: 12px;
+  border-radius: 999px;
+  border: 1px solid alpha(@window_fg_color, 0.22);
+}
+
+.effect-grid {
+  background: transparent;
+}
+.effect-tile {
+  border-radius: 12px;
+  padding: 9px 11px;
+  background: alpha(@window_fg_color, 0.035);
+  border: 1px solid alpha(@window_fg_color, 0.085);
+}
+.effect-tile:hover {
+  background: alpha(@window_fg_color, 0.07);
+}
+.effect-tile.active {
+  background: alpha(@accent_bg_color, 0.12);
+  border-color: alpha(@accent_bg_color, 0.55);
+}
+.effect-name {
+  font-size: 10px;
+  font-weight: 600;
+}
+.effect-strip {
+  border-radius: 5px;
+  min-height: 5px;
+}
+
+.layer-btn {
+  border-radius: 9px;
+  padding: 5px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  background: alpha(@window_fg_color, 0.055);
+  border: 1px solid transparent;
+}
+.layer-btn.active {
+  background: alpha(@accent_bg_color, 0.16);
+  border-color: alpha(@accent_bg_color, 0.45);
+  color: @accent_color;
+}
+
+.key-panel {
+  background: alpha(@window_fg_color, 0.03);
+  border: 1px solid alpha(@window_fg_color, 0.075);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.warning-box {
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: alpha(@warning_color, 0.10);
+  border: 1px solid alpha(@warning_color, 0.25);
+  color: @warning_color;
+  font-size: 12px;
+}
+.error-box {
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: alpha(@error_color, 0.09);
+  border: 1px solid alpha(@error_color, 0.24);
+  color: @error_color;
+  font-size: 12px;
+}
+.info-box {
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: alpha(@accent_bg_color, 0.07);
+  border: 1px solid alpha(@accent_bg_color, 0.18);
+  font-size: 12px;
+}
+
+.gauge-wrap {
+  background: alpha(@window_fg_color, 0.035);
+  border: 1px solid alpha(@window_fg_color, 0.075);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.profile-card {
+  border-radius: 14px;
+  padding: 15px;
+  background: @card_bg_color;
+  border: 1px solid alpha(@window_fg_color, 0.085);
+}
+.profile-card:hover {
+  border-color: alpha(@accent_bg_color, 0.35);
+}
+
+.status-dot {
+  min-width: 8px;
+  min-height: 8px;
+  border-radius: 999px;
+  background: #33d17a;
+}
+.status-dot.off {
+  background: @error_color;
+}
+.status-dot.wait {
+  background: @warning_color;
+}
+
+.flow-tight > * {
+  margin: 3px;
+}
+
+entry.search {
+  border-radius: 10px;
+}
+
+.keycap-label {
+  font-weight: 600;
+}
+
+.scale-row {
+  padding: 4px 0;
+}
+.scale-title {
+  font-size: 12px;
+  font-weight: 650;
+}
+.scale-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: @accent_color;
+  font-feature-settings: "tnum";
+}
+
+.preset-chip {
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  background: alpha(@window_fg_color, 0.06);
+}
+.preset-chip:hover {
+  background: alpha(@accent_bg_color, 0.16);
+  color: @accent_color;
+}
+
+.about-icon {
+  border-radius: 22px;
+  background: linear-gradient(145deg, #ff4d6d, #7c3aed);
+  padding: 18px;
+  color: white;
+}
+
+.scroll-thin scrollbar {
+  min-width: 6px;
+}
+
+.color-control {
+  padding: 4px 9px;
+  border-radius: 9px;
+  background: alpha(@window_fg_color, 0.055);
+  border: 1px solid alpha(@window_fg_color, 0.09);
+}
+.color-control:hover {
+  background: alpha(@window_fg_color, 0.10);
+}
+.color-swatch-button {
+  min-height: 26px;
+  min-width: 30px;
+}

@@ -1,0 +1,5 @@
+#!/bin/sh
+# The AppImage bundles Madlions Control only; it uses the host's Python,
+# PyGObject, GTK4, libadwaita, PangoCairo and pycairo. Flatpak is the fully
+# self-contained option.
+exec python3 "$APPDIR/usr/share/madlions-control/launcher.py" "$@"

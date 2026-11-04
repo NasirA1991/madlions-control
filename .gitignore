@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+AppDir/
+flatpak-build/
+flatpak-repo/
+*.AppImage
+*.flatpak
+*.tar.gz
+docs/screenshots/tmp/

@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "madlions-control"
+version = "0.1.0"
+description = "Native Linux configuration for MADLIONS magnetic-switch keyboards"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Nasir A." }]
+keywords = ["madlions", "keyboard", "hall effect", "rapid trigger", "hid", "gtk4", "libadwaita"]
+classifiers = [
+    "Environment :: X11 Applications :: GTK",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+]
+# PyGObject, GTK4, libadwaita, PangoCairo and pycairo come from the distribution.
+dependencies = []
+
+[project.scripts]
+madlions-control = "madlions_control.app:main"
+madlionsctl = "madlions_control.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/NasirA1991/madlions-control"
+Repository = "https://github.com/NasirA1991/madlions-control"
+Issues = "https://github.com/NasirA1991/madlions-control/issues"
+Changelog = "https://github.com/NasirA1991/madlions-control/releases"
+
+[tool.setuptools]
+packages = ["madlions_control", "madlions_control.ui"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"madlions_control.ui" = ["style.css"]

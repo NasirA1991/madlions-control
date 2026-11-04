@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.madlionscontrol.MadlionsControl</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Madlions Control</name>
+  <summary>Configure MADLIONS magnetic-switch keyboards natively</summary>
+  <developer id="io.github.nasira1991">
+    <name>Nasir A.</name>
+  </developer>
+  <description>
+    <p>
+      Madlions Control is a native GTK4/libadwaita configuration tool for
+      MADLIONS Hall-effect keyboards. It talks to the keyboard directly over
+      its HID interface, so there is no browser tab, no vendor service and no
+      account.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Per-key actuation point and rapid-trigger sensitivity</li>
+      <li>Live analogue travel test with per-key heat map</li>
+      <li>Lighting effects, brightness, speed and per-key colours</li>
+      <li>Four-layer keymap editor and macro support</li>
+      <li>Advanced keys, SOCD, OKS, rapid snappy and DKS</li>
+      <li>Named profiles, presets, backups and a CLI for scripts</li>
+    </ul>
+    <p>
+      Settings are only persisted to the keyboard when you explicitly save.
+      Nothing is uploaded or collected.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.madlionscontrol.MadlionsControl.desktop</launchable>
+  <url type="homepage">https://github.com/NasirA1991/madlions-control</url>
+  <url type="bugtracker">https://github.com/NasirA1991/madlions-control/issues</url>
+  <url type="vcs-browser">https://github.com/NasirA1991/madlions-control</url>
+  <screenshots>
+    <screenshot type="default">
+      <caption>The overview keeps every important value in one place</caption>
+      <image>https://raw.githubusercontent.com/NasirA1991/madlions-control/main/docs/screenshots/overview.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Per-key actuation and rapid trigger</caption>
+      <image>https://raw.githubusercontent.com/NasirA1991/madlions-control/main/docs/screenshots/per-key.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Live analogue travel test</caption>
+      <image>https://raw.githubusercontent.com/NasirA1991/madlions-control/main/docs/screenshots/test.png</image>
+    </screenshot>
+  </screenshots>
+  <releases>
+    <release version="0.1.0" date="2026-11-04">
+      <description>
+        <p>First public release.</p>
+      </description>
+    </release>
+  </releases>
+  <provides>
+    <binary>madlions-control</binary>
+    <binary>madlionsctl</binary>
+  </provides>
+  <content_rating type="oars-1.1"/>
+</component>

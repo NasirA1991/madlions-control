@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Madlions Control
+GenericName=Keyboard Configuration
+Comment=Configure MADLIONS magnetic-switch keyboards
+Exec=madlions-control %U
+Icon=io.github.madlionscontrol.MadlionsControl
+Terminal=false
+Categories=Settings;HardwareSettings;
+Keywords=MADLIONS;keyboard;hall effect;rapid trigger;mad68;mad60;actuation;lighting;
+StartupNotify=true
+StartupWMClass=io.github.madlionscontrol.MadlionsControl

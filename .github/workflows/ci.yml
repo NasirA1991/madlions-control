@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-cairo
+      - name: Unit tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Byte-compile
+        run: python3 -m compileall -q madlions_control
+
+  ui-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install GTK stack
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi python3-cairo gir1.2-gtk-4.0 \
+            gir1.2-adw-1 xvfb
+      - name: Launch every page in demo mode
+        run: |
+          set -e
+          for page in overview perkey lighting keymap macros advanced test profiles; do
+            echo "=== $page ==="
+            rm -f "/tmp/$page.log"
+            timeout 9s xvfb-run -a -s "-screen 0 1400x900x24" \
+              env GDK_BACKEND=x11 MADLIONS_NO_TOOLTIPS=1 \
+              python3 -m madlions_control --demo --page "$page" >"/tmp/$page.log" 2>&1 || true
+            if grep -q "Traceback" "/tmp/$page.log"; then
+              cat "/tmp/$page.log"
+              exit 1
+            fi
+            grep -E "Gtk-CRITICAL" "/tmp/$page.log" | grep -v "accessibility bus" || true
+          done

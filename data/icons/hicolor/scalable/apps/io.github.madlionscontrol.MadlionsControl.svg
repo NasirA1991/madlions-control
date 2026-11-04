@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#211626"/>
+      <stop offset="0.52" stop-color="#131318"/>
+      <stop offset="1" stop-color="#08080b"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff4d6d" stop-opacity="0.75"/>
+      <stop offset="0.55" stop-color="#9b5cff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#ff9a3c" stop-opacity="0.55"/>
+    </linearGradient>
+    <linearGradient id="key" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#343440"/>
+      <stop offset="1" stop-color="#1b1b23"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff4d6d"/>
+      <stop offset="0.6" stop-color="#ff2e63"/>
+      <stop offset="1" stop-color="#ff9a3c"/>
+    </linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a970ff"/>
+      <stop offset="1" stop-color="#6c3bd9"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ff4d6d" stop-opacity="0.42"/>
+      <stop offset="0.55" stop-color="#ff4d6d" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#ff4d6d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="wave" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff9a3c" stop-opacity="0"/>
+      <stop offset="0.18" stop-color="#ff9a3c"/>
+      <stop offset="0.5" stop-color="#ff4d6d"/>
+      <stop offset="0.82" stop-color="#a970ff"/>
+      <stop offset="1" stop-color="#a970ff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bg)"/>
+  <rect x="17.5" y="17.5" width="477" height="477" rx="110.5" fill="none" stroke="url(#rim)" stroke-width="3"/>
+
+  <ellipse cx="352" cy="190" rx="190" ry="150" fill="url(#glow)"/>
+
+  <!-- Hall-effect sweep -->
+  <path d="M78 122 C 140 70, 190 158, 258 116 S 382 56, 438 102"
+        fill="none" stroke="url(#wave)" stroke-width="7" stroke-linecap="round" opacity="0.95"/>
+  <circle cx="438" cy="102" r="7" fill="#c9a4ff"/>
+
+  <!-- keyboard plate -->
+  <rect x="62" y="166" width="388" height="246" rx="30" fill="#0c0c11" stroke="#30303c" stroke-width="2"/>
+  <rect x="74" y="178" width="364" height="222" rx="22" fill="#101016" stroke="#ffffff" stroke-opacity="0.045"/>
+
+  <!-- keycaps: row 1 -->
+  <g fill="url(#key)" stroke="#454552" stroke-width="1.4">
+    <rect x="90" y="192" width="28" height="26" rx="7"/>
+    <rect x="124" y="192" width="28" height="26" rx="7"/>
+    <rect x="158" y="192" width="28" height="26" rx="7"/>
+    <rect x="192" y="192" width="28" height="26" rx="7"/>
+    <rect x="226" y="192" width="28" height="26" rx="7"/>
+    <rect x="260" y="192" width="28" height="26" rx="7"/>
+    <rect x="294" y="192" width="28" height="26" rx="7"/>
+    <rect x="328" y="192" width="28" height="26" rx="7"/>
+    <rect x="362" y="192" width="28" height="26" rx="7"/>
+    <rect x="396" y="192" width="28" height="26" rx="7" fill="url(#accent)" stroke="#ff8ba0"/>
+  </g>
+  <!-- row 2 -->
+  <g fill="url(#key)" stroke="#454552" stroke-width="1.4">
+    <rect x="90" y="226" width="40" height="26" rx="7"/>
+    <rect x="136" y="226" width="28" height="26" rx="7" fill="url(#violet)" stroke="#c1a6ff"/>
+    <rect x="170" y="226" width="28" height="26" rx="7"/>
+    <rect x="204" y="226" width="28" height="26" rx="7"/>
+    <rect x="238" y="226" width="28" height="26" rx="7"/>
+    <rect x="272" y="226" width="28" height="26" rx="7"/>
+    <rect x="306" y="226" width="28" height="26" rx="7"/>
+    <rect x="340" y="226" width="28" height="26" rx="7"/>
+    <rect x="374" y="226" width="28" height="26" rx="7"/>
+    <rect x="408" y="226" width="22" height="26" rx="7"/>
+  </g>
+  <!-- row 3 -->
+  <g fill="url(#key)" stroke="#454552" stroke-width="1.4">
+    <rect x="90" y="260" width="48" height="26" rx="7"/>
+    <rect x="144" y="260" width="28" height="26" rx="7"/>
+    <rect x="178" y="260" width="28" height="26" rx="7"/>
+    <rect x="212" y="260" width="28" height="26" rx="7"/>
+    <rect x="246" y="260" width="28" height="26" rx="7"/>
+    <rect x="280" y="260" width="28" height="26" rx="7"/>
+    <rect x="314" y="260" width="28" height="26" rx="7"/>
+    <rect x="348" y="260" width="28" height="26" rx="7"/>
+    <rect x="382" y="260" width="48" height="26" rx="7"/>
+  </g>
+  <!-- row 4 -->
+  <g fill="url(#key)" stroke="#454552" stroke-width="1.4">
+    <rect x="90" y="294" width="34" height="26" rx="7"/>
+    <rect x="130" y="294" width="34" height="26" rx="7"/>
+    <rect x="170" y="294" width="34" height="26" rx="7"/>
+    <rect x="210" y="294" width="104" height="26" rx="7" fill="url(#accent)" stroke="#ff8ba0"/>
+    <rect x="320" y="294" width="34" height="26" rx="7"/>
+    <rect x="360" y="294" width="34" height="26" rx="7"/>
+    <rect x="400" y="294" width="30" height="26" rx="7"/>
+  </g>
+
+  <!-- bottom light bar -->
+  <rect x="90" y="380" width="340" height="5" rx="2.5" fill="url(#wave)" opacity="0.55"/>
+</svg>

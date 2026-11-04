@@ -1,0 +1,9 @@
+# MADLIONS / FGG keyboards (Shenzhen Yizhita, USB vendor 373b)
+#
+# The configuration channel is a vendor HID collection owned by root by
+# default.  Tagging it with uaccess gives the active desktop user read/write
+# access through systemd-logind, without a world-writable device node.
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="373b", MODE="0660", TAG+="uaccess"
+
+# Non-systemd fallback: uncomment and add your user to the input group.
+# SUBSYSTEM=="hidraw", ATTRS{idVendor}=="373b", MODE="0660", GROUP="input"

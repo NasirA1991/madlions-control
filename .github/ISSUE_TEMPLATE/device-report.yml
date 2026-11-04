@@ -1,0 +1,46 @@
+name: Device report
+description: Report a MADLIONS keyboard that works, or one that does not.
+labels: ["device report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping broaden hardware support. `madlionsctl report` produces
+        a read-only report; review it and remove anything you would rather not share.
+  - type: input
+    id: model
+    attributes:
+      label: Model and USB ID
+      description: The product name and the 373B:xxxx ID from `madlionsctl scan`.
+      placeholder: MAD68 HE RGB — 373B:1058
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Firmware / protocol version
+      description: Shown in the app header or by `madlionsctl status`.
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Device report
+      description: Paste `madlionsctl report` here (read-only).
+      render: json
+  - type: dropdown
+    id: result
+    attributes:
+      label: What works?
+      options:
+        - Reads work, writes work
+        - Reads work, writes disabled
+        - The keyboard is detected but not supported
+        - Not detected
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Anything unexpected, and whether you are willing to test a fix.
