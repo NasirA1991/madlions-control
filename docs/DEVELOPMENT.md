@@ -84,7 +84,7 @@ madlions_control/
   layout.py          physical 60% / 65% / grid layouts
   keycodes.py        QMK keycode table and search
   state.py           UI state model and lazy loaders
-  worker.py          single I/O thread, job queue, 60 Hz test stream
+  worker.py          single I/O thread, job queue, 30 Hz test stream
   profiles.py        JSON profiles, presets, backups, apply
   baseline.py        verified per-board tuning reset, with read-back checks
   macros_codec.py    VIA/Vial macro buffer codec

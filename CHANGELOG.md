@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.1 — 2026-11-04
+
+### Changed
+- Live telemetry now samples at 30 Hz instead of 60 Hz.
+- The Test page stops repainting while every key is idle, and updates the heat
+  map/gauge at 20 Hz while keys are moving. Active live-view CPU dropped from
+  roughly 48% to 20% of one core on the reference machine; idle dropped to
+  about 1%.
+- Pages are built lazily on first visit, cutting startup work and initial
+  memory a little.
+
 ## 0.3.0 — 2026-11-04
 
 ### Added

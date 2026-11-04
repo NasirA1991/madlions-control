@@ -130,7 +130,7 @@ Download `madlions-control-<version>-x86_64.flatpak` from the
 [Releases page](https://github.com/NasirA1991/madlions-control/releases):
 
 ```bash
-flatpak install --user ./madlions-control-0.3.0-x86_64.flatpak
+flatpak install --user ./madlions-control-0.3.1-x86_64.flatpak
 flatpak run io.github.madlionscontrol.MadlionsControl
 ```
 
@@ -143,8 +143,8 @@ replug it.
 ### AppImage
 
 ```bash
-chmod +x madlions-control-0.3.0-x86_64.AppImage
-./madlions-control-0.3.0-x86_64.AppImage
+chmod +x madlions-control-0.3.1-x86_64.AppImage
+./madlions-control-0.3.1-x86_64.AppImage
 ```
 
 The AppImage uses the host's Python and GTK stack. Install it with:
@@ -304,6 +304,22 @@ If your MADLIONS board works — or almost works — a
 [device report](https://github.com/NasirA1991/madlions-control/issues/new?template=device-report.yml)
 is the fastest way to widen support. `madlionsctl report` produces a read-only
 snapshot; review it before posting and remove anything you do not want to share.
+
+## Performance
+
+Measured on the reference MAD68 HE RGB under Xvfb:
+
+- Window ready in about **0.4 s**.
+- **0–0.2% CPU** idle; about **1%** with the Test page open but no key moving.
+- About **20% of one core** while the live heat map is actively redrawing.
+- About **150 MB PSS** idle, or **170 MB** with the Test page open
+  (GTK4 + Python, shared libraries included).
+- AppImage is about **1.1 MB**; the Flatpak app payload is about **0.2 MB**.
+- No daemon, no background service and no telemetry.
+
+Memory is the one area where this is a normal GTK/Python application rather
+than a tiny native utility; CPU and disk use are small, and the app is only
+resident while open.
 
 ## Security
 

@@ -17,7 +17,7 @@ from .keyboard import KeyboardCanvas
 from .widgets import Page, Section, button, label
 
 MAX_TRAVEL = 3.5
-HISTORY = 220
+HISTORY = 100
 
 
 class TravelGauge(Gtk.DrawingArea):
@@ -164,6 +164,8 @@ class TestPage(Page):
         self.history: list[float] = []
         self.frame_count = 0
         self.last_frame_time = 0.0
+        self._last_draw = 0.0
+        self._idle = False
         self.scan_hz = 0.0
         self.peak = 0.0
         self.pressed_max = 0
@@ -296,6 +298,8 @@ class TestPage(Page):
         self.history.clear()
         self.frame_count = 0
         self.last_frame_time = 0.0
+        self._last_draw = 0.0
+        self._idle = False
         self.scan_hz = 0.0
         self.peak = 0.0
         self.pressed_max = 0
@@ -322,6 +326,23 @@ class TestPage(Page):
                 self.scan_hz = instant if not self.scan_hz else self.scan_hz * 0.85 + instant * 0.15
         self.last_frame_time = now
         self.frame_count += 1
+
+        # An idle board sends the same all-zero frame forever.  Do not repaint
+        # the canvas/gauge at 30 Hz when nothing is happening; repaint once on
+        # the transition to idle, then stay quiet until a key moves.
+        active = any(value > 0.005 for value in frame)
+        if not active and self._idle:
+            if self.frame_count % 60 == 0:
+                self.stat_frames.set_text(str(self.frame_count))
+            return
+        self._idle = not active
+
+        # The sensor stream is 30 Hz; the heat map and gauge are redrawn at
+        # 20 Hz, which is still smooth and noticeably cheaper in Python/Cairo.
+        if now - self._last_draw < 1.0 / 20.0:
+            return
+        self._last_draw = now
+
         self.canvas.set_travel(frame)
         state = self.window.state
         row, col = self.selected

@@ -68,6 +68,7 @@ class MainWindow(Adw.ApplicationWindow):
         self._current_page = ""
         self._auto_backed_up = False
         self._reset_busy = False
+        self._page_specs: dict[str, tuple[str, str, type]] = {}
         self._settings = settings.load()
         self.set_default_size(self._settings.window_width, self._settings.window_height)
         self.set_title(config.APP_NAME)
@@ -82,7 +83,7 @@ class MainWindow(Adw.ApplicationWindow):
         self._build_body()
         self.connect("close-request", self._on_close)
         self._build_pages()
-        self.go(self._settings.last_page if self._settings.last_page in self._pages else "overview")
+        self.go(self._settings.last_page if self._settings.last_page in self._page_specs else "overview")
         self.on_state(worker.state)
 
     # -- construction ------------------------------------------------------
@@ -205,40 +206,55 @@ class MainWindow(Adw.ApplicationWindow):
         self.toolbar.set_content(body)
 
     def _build_pages(self) -> None:
-        pages = [
-            ("overview", "Overview", "go-home-symbolic", OverviewPage(self)),
-            ("perkey", "Per-key", "input-keyboard-symbolic", PerKeyPage(self)),
-            ("lighting", "Lighting", "display-brightness-symbolic", LightingPage(self)),
-            ("keymap", "Keymap", "view-list-symbolic", KeymapPage(self)),
-            ("macros", "Macros", "view-list-bullet-symbolic", MacrosPage(self)),
-            ("advanced", "Advanced", "applications-engineering-symbolic", AdvancedPage(self)),
-            ("test", "Test", "utilities-system-monitor-symbolic", TestPage(self)),
-            ("profiles", "Profiles", "bookmark-new-symbolic", ProfilesPage(self)),
-        ]
-        for name, title, icon, page in pages:
-            self._pages[name] = page
-            self.stack.add_named(page, name)
+        # Pages are constructed on first visit.  Building all eight pages at
+        # startup costs tens of megabytes for widgets that may never be opened.
+        specs = (
+            ("overview", "Overview", "go-home-symbolic", OverviewPage),
+            ("perkey", "Per-key", "input-keyboard-symbolic", PerKeyPage),
+            ("lighting", "Lighting", "display-brightness-symbolic", LightingPage),
+            ("keymap", "Keymap", "view-list-symbolic", KeymapPage),
+            ("macros", "Macros", "view-list-bullet-symbolic", MacrosPage),
+            ("advanced", "Advanced", "applications-engineering-symbolic", AdvancedPage),
+            ("test", "Test", "utilities-system-monitor-symbolic", TestPage),
+            ("profiles", "Profiles", "bookmark-new-symbolic", ProfilesPage),
+        )
+        for name, title, icon, page_class in specs:
+            self._page_specs[name] = (title, icon, page_class)
             nav = NavRow(name, title, icon)
             self._nav_rows[name] = nav
             self.nav_list.append(nav)
+
+    def _ensure_page(self, name: str):
+        page = self._pages.get(name)
+        if page is not None:
+            return page
+        _title, _icon, page_class = self._page_specs[name]
+        page = page_class(self)
+        self._pages[name] = page
+        self.stack.add_named(page, name)
+        try:
+            page.on_state(self.state)
+        except Exception:
+            pass
+        return page
 
     # -- navigation --------------------------------------------------------
     def _nav_activated(self, _listbox: Gtk.ListBox, row: NavRow) -> None:
         self.go(row.name)
 
     def go(self, name: str) -> None:
-        if name not in self._pages:
+        if name not in self._page_specs:
             return
         if self._current_page == name:
             return
         current = self._pages.get(self._current_page)
         if current is not None:
             current.on_hide()
+        page = self._ensure_page(name)
         self._current_page = name
         self.stack.set_visible_child_name(name)
         for page_name, row in self._nav_rows.items():
             row.set_active(page_name == name)
-        page = self._pages[name]
         page.on_show()
         try:
             page.on_state(self.state)

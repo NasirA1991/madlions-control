@@ -48,6 +48,16 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.3.1" date="2026-11-04">
+      <description>
+        <p>Lower idle and live-test resource use.</p>
+        <ul>
+          <li>Telemetry runs at 30 Hz and stops repainting while the board is idle.</li>
+          <li>The live heat map redraws at 20 Hz, cutting active test CPU roughly in half.</li>
+          <li>Pages are constructed on first visit instead of all at startup.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.3.0" date="2026-11-04">
       <description>
         <p>Fn shortcut cheatsheet.</p>
