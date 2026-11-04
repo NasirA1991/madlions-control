@@ -105,8 +105,8 @@ helps add it properly.
 
 ## Install
 
-Release builds are produced by GitHub Actions for every `v*` tag: AppImage,
-Flatpak, source tarball and AUR packages.
+Every release includes an AppImage, a self-contained Flatpak bundle and the
+source tarball. The AUR packages are available separately.
 
 ### Arch, CachyOS, EndeavourOS (AUR)
 
