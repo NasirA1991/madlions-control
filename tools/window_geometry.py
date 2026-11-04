@@ -23,4 +23,4 @@ def walk(window):
 
 
 walk(d.screen().root)
-print(" ".join(str(v) for v in best) if best else "0 0 1180 780")
+print(" ".join(str(v) for v in best) if best else "0 0 0 0")

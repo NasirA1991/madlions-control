@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Regenerate the screenshots used by the README and AppStream metadata.
-# Requires: xvfb-run, ImageMagick (import/convert), python-xlib.
+# Requires: xvfb-run, dbus-run-session, ImageMagick (import/convert), python-xlib.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
@@ -34,21 +34,34 @@ shot() {
     name="$2"
     shift 2
     echo "== $page"
-    xvfb-run -a -s "-screen 0 1400x900x24" bash -c '
+    dbus-run-session -- xvfb-run -a -s "-screen 0 1400x900x24" bash -c '
         export GDK_BACKEND=x11
         page="$1"
         base="$2"
         shift 2
         python3 -m madlions_control --demo --page "$page" >"$base.log" 2>&1 &
         pid=$!
-        sleep 5
+        wx=0; wy=0; ww=0; wh=0
+        for _ in $(seq 1 150); do
+            read -r wx wy ww wh <<<"$(python3 tools/window_geometry.py)"
+            if [ "${ww:-0}" -gt 400 ] && [ "${wh:-0}" -gt 300 ]; then
+                break
+            fi
+            sleep 0.1
+        done
+        if [ "${ww:-0}" -le 400 ] || [ "${wh:-0}" -le 300 ]; then
+            echo "window did not appear" >&2
+            cat "$base.log" >&2
+            kill $pid 2>/dev/null || true
+            exit 1
+        fi
+        sleep 1
         for click in "$@"; do
             x="${click%,*}"
             y="${click#*,}"
             python3 tools/click.py "$x" "$y" || true
             sleep 0.8
         done
-        read -r wx wy ww wh <<<"$(python3 tools/window_geometry.py)"
         import -window root "$base.raw.png" 2>/dev/null
         echo "$wx $wy $ww $wh" > "$base.geometry"
         kill $pid 2>/dev/null || true
