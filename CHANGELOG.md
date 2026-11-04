@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.2 — 2026-11-04
+
+### Changed
+- Restored the Test page to 60 Hz sampling and 60 fps rendering, because the
+  smoother analogue view is more useful than the CPU saving for this screen.
+- The idle-repaint skip from 0.3.1 remains: an open Test page with no key moving
+  stays at roughly 0% CPU.
+- Live views are the only CPU-heavy mode; the rest of the app remains idle-cheap.
+
 ## 0.3.1 — 2026-11-04
 
 ### Changed

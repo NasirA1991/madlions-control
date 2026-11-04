@@ -130,7 +130,7 @@ Download `madlions-control-<version>-x86_64.flatpak` from the
 [Releases page](https://github.com/NasirA1991/madlions-control/releases):
 
 ```bash
-flatpak install --user ./madlions-control-0.3.1-x86_64.flatpak
+flatpak install --user ./madlions-control-0.3.2-x86_64.flatpak
 flatpak run io.github.madlionscontrol.MadlionsControl
 ```
 
@@ -143,8 +143,8 @@ replug it.
 ### AppImage
 
 ```bash
-chmod +x madlions-control-0.3.1-x86_64.AppImage
-./madlions-control-0.3.1-x86_64.AppImage
+chmod +x madlions-control-0.3.2-x86_64.AppImage
+./madlions-control-0.3.2-x86_64.AppImage
 ```
 
 The AppImage uses the host's Python and GTK stack. Install it with:
@@ -310,8 +310,10 @@ snapshot; review it before posting and remove anything you do not want to share.
 Measured on the reference MAD68 HE RGB under Xvfb:
 
 - Window ready in about **0.4 s**.
-- **0–0.2% CPU** idle; about **1%** with the Test page open but no key moving.
-- About **20% of one core** while the live heat map is actively redrawing.
+- **0–0.2% CPU** idle; about **0.5–1%** with the Test page open but no key moving.
+- The Test page redraws at **60 fps** and uses roughly **50% of one core** while
+  the heat map is actively moving. That is the deliberate smoothness tradeoff;
+  repainting stops completely while every key is idle.
 - About **150 MB PSS** idle, or **170 MB** with the Test page open
   (GTK4 + Python, shared libraries included).
 - AppImage is about **1.1 MB**; the Flatpak app payload is about **0.2 MB**.

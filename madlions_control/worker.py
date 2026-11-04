@@ -40,7 +40,7 @@ class DeviceWorker:
         self._stream_cb: Callable[[list[float]], None] | None = None
         self._stream_stop = threading.Event()
         self._next_stream = 0.0
-        self._stream_hz = 30.0
+        self._stream_hz = 60.0
         self._last_connect_error = ""
         self._next_connect = 0.0
         self._lock = threading.Lock()
@@ -246,7 +246,7 @@ class DeviceWorker:
         self._stream_cb = callback
         self._stream_stop.clear()
         self._next_stream = 0.0
-        self._stream_hz = 30.0
+        self._stream_hz = 60.0
 
     def stop_stream(self) -> None:
         self._stream_stop.set()

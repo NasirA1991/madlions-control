@@ -48,6 +48,15 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.3.2" date="2026-11-04">
+      <description>
+        <p>Restored the smooth live test view.</p>
+        <ul>
+          <li>The Test page samples and redraws at 60 Hz again.</li>
+          <li>Idle repainting is still skipped, so an open Test page stays cheap when nothing moves.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.3.1" date="2026-11-04">
       <description>
         <p>Lower idle and live-test resource use.</p>
