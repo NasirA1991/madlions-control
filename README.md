@@ -57,7 +57,6 @@ feel of every single key**.
 - Every effect the firmware supports, including breathing, ribbons, rotating
   belts, spectrum, digital rain and fingertip rainbow.
 - Brightness, speed, colour, and per-key RGB painting.
-- Side-light controls on models that have one.
 
 ![Lighting](docs/screenshots/lighting.png)
 
@@ -275,6 +274,8 @@ Install the host udev rule and replug the device; the Flatpak itself already has
 ## What is not included
 
 - Firmware update, DFU and Hall-sensor calibration.
+- Onboard profile slots and report-rate selection (the current setup can be
+  saved to the keyboard, and profiles live on the computer).
 - Vendor cloud features, accounts or telemetry.
 - Per-key colour calibration curves (the firmware's gamma is preserved as-is).
 
