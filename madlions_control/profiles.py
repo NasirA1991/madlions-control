@@ -752,10 +752,22 @@ class Profile:
 
         if include_keymap and self.keymap_hex:
             device.write_buffer(CMD_DYNAMIC_KEYMAP_SET_BUFFER, keymap)
+            actual_keymap = device.read_keymap()
+            if actual_keymap != keymap:
+                raise ProfileValidationError(
+                    "the keymap did not read back after writing; verify the "
+                    "keyboard state and available backups"
+                )
             actions.append("keymap (persistent)")
 
         if include_macros and macros is not None:
             device.write_macros(macros)
+            actual_macros = device.read_macros()
+            if actual_macros != macros:
+                raise ProfileValidationError(
+                    "the macro buffer did not read back after writing; verify "
+                    "the keyboard state and available backups"
+                )
             actions.append("macros (persistent)")
 
         if include_advanced and self.advanced_keys is not None:

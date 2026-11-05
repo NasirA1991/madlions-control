@@ -94,8 +94,11 @@ def build_parser() -> argparse.ArgumentParser:
         description="Native configuration for MADLIONS magnetic-switch keyboards.",
     )
     parser.add_argument("--demo", action="store_true", help="run with a simulated keyboard")
-    parser.add_argument("--page", default=None,
-                        help="open a page: overview, perkey, lighting, keymap, advanced, test, profiles")
+    parser.add_argument(
+        "--page", default=None,
+        choices=("overview", "perkey", "lighting", "keymap", "macros", "advanced", "test", "profiles"),
+        help="open a specific page",
+    )
     parser.add_argument("--version", action="version", version=f"%(prog)s {config.VERSION}")
     return parser
 

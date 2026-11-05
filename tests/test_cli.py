@@ -2,8 +2,11 @@ import argparse
 import unittest
 from types import SimpleNamespace
 
-from madlions_control import cli, demo, state as state_mod
+from unittest.mock import patch
+
+from madlions_control import boards, cli, demo, state as state_mod
 from madlions_control.device import DeviceError
+from madlions_control.transport import HidInfo
 
 
 class ParserTests(unittest.TestCase):
@@ -42,6 +45,25 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(args.func, cli.cmd_reset_tuning)
         args = cli.build_parser().parse_args(["reset-tuning", "--save"])
         self.assertTrue(args.save)
+
+    def test_device_selector_by_hidraw_and_usb_id(self):
+        board = boards.DEFAULT_BOARD
+        info = HidInfo(
+            path="/dev/hidraw7", hidraw="hidraw7", name=board.name,
+            product_name="MAD68", product_id=board.product_id,
+            vendor_id=0x373B, serial="", descriptor=b"", supported=True,
+            board=board,
+        )
+        with patch("madlions_control.cli.discover", return_value=[info]):
+            self.assertIs(cli._select_device("/dev/hidraw7"), info)
+            self.assertIs(cli._select_device("hidraw7"), info)
+            self.assertIs(cli._select_device("373B:1058"), info)
+            with self.assertRaises(DeviceError):
+                cli._select_device("hidraw99")
+
+    def test_device_option_is_global(self):
+        cli_args = cli.build_parser().parse_args(["--device", "hidraw7", "status"])
+        self.assertEqual(cli_args.device, "hidraw7")
 
     def test_key_parser(self):
         self.assertEqual(cli._parse_key("2,1"), (2, 1))

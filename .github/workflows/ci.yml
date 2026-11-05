@@ -39,12 +39,23 @@ jobs:
           for page in overview perkey lighting keymap macros advanced test profiles; do
             echo "=== $page ==="
             rm -f "/tmp/$page.log"
+            set +e
             timeout 9s xvfb-run -a -s "-screen 0 1400x900x24" \
-              env GDK_BACKEND=x11 MADLIONS_NO_TOOLTIPS=1 \
-              python3 -m madlions_control --demo --page "$page" >"/tmp/$page.log" 2>&1 || true
+              env GDK_BACKEND=x11 MADLIONS_NO_TOOLTIPS=1 NO_AT_BRIDGE=1 \
+              python3 -m madlions_control --demo --page "$page" >"/tmp/$page.log" 2>&1
+            status=$?
+            set -e
+            if [ "$status" -ne 124 ]; then
+              echo "App exited before the timeout (status $status)" >&2
+              cat "/tmp/$page.log" >&2
+              exit 1
+            fi
             if grep -q "Traceback" "/tmp/$page.log"; then
               cat "/tmp/$page.log"
               exit 1
             fi
-            grep -E "Gtk-CRITICAL" "/tmp/$page.log" | grep -v "accessibility bus" || true
+            if grep -E "Gtk-CRITICAL" "/tmp/$page.log" | grep -vE "accessibility bus|a11y|Unable to register the application"; then
+              cat "/tmp/$page.log"
+              exit 1
+            fi
           done

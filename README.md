@@ -241,6 +241,7 @@ Installed by the AUR and source installs:
 
 ```bash
 madlionsctl status
+madlionsctl --device /dev/hidraw7 status
 madlionsctl status --json
 madlionsctl scan
 madlionsctl actuation 0.50 --key 2,1 --key 2,2
@@ -271,7 +272,7 @@ any command uses a simulated keyboard.
   `~/.local/share/madlions-control/profiles`; automatic tuning snapshots live in
   `profiles/backups` and keep the last ten. Full backups also live there and
   include the keymap, macros and advanced bindings. Restoring those persistent
-  sections asks for confirmation first.
+  sections asks for confirmation and saves a full snapshot first.
 - **Scoped reset.** Reset tuning restores only volatile tuning for a verified
   board, saves a snapshot first, and never touches the keymap, macros, advanced
   keys, per-key colours or calibration. A true factory reset is deliberately not
@@ -295,6 +296,10 @@ ACL can be reapplied by replugging.
 **A board is shown as read-only.**
 That model has not been verified against this app yet. Reading, the test page and
 diagnostics still work. Open a device report to get it added.
+
+**Multiple keyboards are connected.**
+The app warns and uses the first detected board. Run `madlionsctl scan`, then
+select one with `madlionsctl --device /dev/hidrawN ...`.
 
 **The lighting colour looks different after reopening the app.**
 The keyboard reports LED colours after its internal gamma curve, so a reloaded

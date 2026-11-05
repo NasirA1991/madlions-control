@@ -302,6 +302,10 @@ class MacrosPage(Page):
 
         def job(device):
             device.write_macros(buffer)
+            if device.read_macros() != buffer:
+                raise ValueError(
+                    "the macro buffer did not read back after writing"
+                )
 
         def error(exc):
             self.window.notify(f"Macro not saved: {exc}")

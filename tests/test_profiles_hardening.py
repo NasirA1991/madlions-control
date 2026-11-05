@@ -147,3 +147,36 @@ class ProfileRoundTripTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class _BadKeymapRead(demo.DemoBackend):
+    def read_keymap(self) -> bytes:
+        return b"\x00" * self.board.keymap_size
+
+
+class _BadMacroRead(demo.DemoBackend):
+    def read_macros(self) -> bytes:
+        return b"\x00" * (len(self._macros) + 1)
+
+
+class PersistentReadbackTests(unittest.TestCase):
+    def _full_profile(self):
+        backend = demo.DemoBackend()
+        state = state_mod.load_basic(backend)
+        state = state_mod.load_colors(backend, state)
+        state = state_mod.load_keymap(backend, state)
+        state = state_mod.load_macros(backend, state)
+        state = state_mod.load_advanced(backend, state)
+        return profiles.Profile.capture(state, "Full", full=True), state
+
+    def test_keymap_readback_mismatch_raises(self):
+        profile, state = self._full_profile()
+        backend = _BadKeymapRead()
+        with self.assertRaises(profiles.ProfileValidationError):
+            profile.apply(backend, state, include_keymap=True)
+
+    def test_macro_readback_mismatch_raises(self):
+        profile, state = self._full_profile()
+        backend = _BadMacroRead()
+        with self.assertRaises(profiles.ProfileValidationError):
+            profile.apply(backend, state, include_macros=True)

@@ -22,14 +22,35 @@ from .device import (
     clamp_travel,
 )
 from .lighting import BRIGHTNESS_MAX, EFFECTS, clamp_speed, effect_name, hex_to_rgb
-from .transport import discover
+from .transport import discover, find_supported
+
+
+def _select_device(selector: str | None):
+    if not selector:
+        return find_supported()
+    needle = selector.strip()
+    for info in discover():
+        if needle in (info.path, info.hidraw, info.usb_id):
+            if not info.supported:
+                raise DeviceError(
+                    f"{info.usb_id} matched {selector!r}, but {info.reason}"
+                )
+            return info
+    raise DeviceError(
+        f"no supported MADLIONS keyboard matched {selector!r}; "
+        "run 'madlionsctl scan' to list devices"
+    )
 
 
 def _open_device(args) -> tuple[object, object]:
     if getattr(args, "demo", False):
         backend = DemoBackend()
         return backend, state_mod.load_basic(backend)
-    device = MadlionsDevice.open(allow_unverified=getattr(args, "allow_unverified", False))
+    info = _select_device(getattr(args, "device", None))
+    device = MadlionsDevice.open(
+        info=info,
+        allow_unverified=getattr(args, "allow_unverified", False),
+    )
     return device, state_mod.load_basic(device)
 
 
@@ -445,6 +466,11 @@ def cmd_profile(args) -> int:
                     file=sys.stderr,
                 )
                 return 1
+            snapshot = None
+            if args.persistent and profile.has_persistent_sections:
+                _snapshot_profile, snapshot = profiles.full_backup(
+                    device, name=f"Before restore: {profile.name}",
+                )
             actions = profile.apply(
                 device, loaded,
                 include_keymap=bool(args.persistent and profile.keymap_hex),
@@ -464,6 +490,8 @@ def cmd_profile(args) -> int:
             )
             print(f"applied {profile.name}: "
                   f"{', '.join(actions) if actions else 'no changes'}{note}")
+            if snapshot is not None:
+                print(f"pre-restore snapshot: {snapshot}")
             return 0
     finally:
         device.close()
@@ -520,6 +548,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--demo", action="store_true", help="use a simulated keyboard")
     parser.add_argument("--allow-unverified", action="store_true",
                         help="allow writes on an unverified board (dangerous)")
+    parser.add_argument("--device", default=None,
+                        help="select a device by /dev/hidrawN, hidrawN or USB ID")
     parser.add_argument("--version", action="version", version=f"%(prog)s {config.VERSION}")
     sub = parser.add_subparsers(dest="command", required=True)
 

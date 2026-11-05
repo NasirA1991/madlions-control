@@ -174,6 +174,11 @@ def discover() -> list[HidInfo]:
     return found
 
 
+def supported_devices() -> list[HidInfo]:
+    """Supported keyboards currently present, in discovery order."""
+    return [node for node in discover() if node.supported]
+
+
 def find_supported() -> HidInfo:
     nodes = discover()
     supported = [node for node in nodes if node.supported]

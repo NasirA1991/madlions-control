@@ -68,6 +68,7 @@ class MainWindow(Adw.ApplicationWindow):
         self._current_page = ""
         self._auto_backed_up = False
         self._reset_busy = False
+        self._multi_warned = False
         self._page_specs: dict[str, tuple[str, str, type]] = {}
         self._settings = settings.load()
         self.set_default_size(self._settings.window_width, self._settings.window_height)
@@ -234,8 +235,8 @@ class MainWindow(Adw.ApplicationWindow):
         self.stack.add_named(page, name)
         try:
             page.on_state(self.state)
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001 - keep the app alive, log it
+            self._report_page_error(page, exc)
         return page
 
     # -- navigation --------------------------------------------------------
@@ -255,11 +256,14 @@ class MainWindow(Adw.ApplicationWindow):
         self.stack.set_visible_child_name(name)
         for page_name, row in self._nav_rows.items():
             row.set_active(page_name == name)
-        page.on_show()
+        try:
+            page.on_show()
+        except Exception as exc:  # noqa: BLE001 - keep navigation alive, log it
+            self._report_page_error(page, exc)
         try:
             page.on_state(self.state)
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001 - keep navigation alive, log it
+            self._report_page_error(page, exc)
         self._settings.last_page = name
 
     # -- state -------------------------------------------------------------
@@ -275,6 +279,11 @@ class MainWindow(Adw.ApplicationWindow):
             if page is not None:
                 page.stream_error(str(payload))
 
+    def _report_page_error(self, page, exc: Exception) -> None:
+        print(f"page error ({getattr(page, 'title', type(page).__name__)}): {exc}",
+              file=sys.stderr)
+        traceback.print_exc()
+
     def on_state(self, state: KeyboardState) -> None:
         self.state = state
         self.state_version += 1
@@ -286,6 +295,17 @@ class MainWindow(Adw.ApplicationWindow):
             except Exception:  # noqa: BLE001 - a backup must never break the app
                 pass
         if state.connected and state.info:
+            if not self._multi_warned:
+                self._multi_warned = True
+                try:
+                    devices = transport.supported_devices()
+                except Exception:
+                    devices = []
+                if len(devices) > 1:
+                    self.notify(
+                        f"{len(devices)} keyboards detected — using "
+                        f"{state.info.title}. Use madlionsctl --device to pick another."
+                    )
             self.status_pill.set_state("online", "Connected")
             self.title_label.set_text(config.APP_NAME)
             self.subtitle_label.set_text(f"{state.info.board.name} · {state.info.usb_id}")
@@ -308,7 +328,7 @@ class MainWindow(Adw.ApplicationWindow):
             try:
                 page.on_state(state)
             except Exception as exc:  # noqa: BLE001 - a broken page must not stop the app
-                print(f"page error: {exc}")
+                self._report_page_error(page, exc)
 
     def set_state_local(self, state: KeyboardState) -> None:
         """Apply an optimistic update while a write is in flight."""
@@ -316,8 +336,8 @@ class MainWindow(Adw.ApplicationWindow):
         for page in self._pages.values():
             try:
                 page.on_state(state)
-            except Exception:
-                pass
+            except Exception as exc:  # noqa: BLE001 - an optimistic update must not explode
+                self._report_page_error(page, exc)
 
     def refresh(self) -> None:
         if self.demo:
@@ -484,9 +504,9 @@ class MainWindow(Adw.ApplicationWindow):
                 )
         if persistent:
             body += (
-                "\n\nThis is a full backup. Keymap, macros and advanced bindings "
-                "are written to onboard memory immediately and cannot be undone "
-                "from this dialog."
+                "\n\nThis is a full backup. A complete snapshot of the current "
+                "keyboard is saved first. Keymap, macros and advanced bindings "
+                "are then written to onboard memory immediately."
             )
         else:
             body += "\n\nTuning changes are volatile; use Save to keyboard to persist them."
@@ -515,17 +535,28 @@ class MainWindow(Adw.ApplicationWindow):
         )
 
         def job(device):
-            return profile.apply(
+            snapshot = None
+            if persistent:
+                _snapshot_profile, snapshot = profiles.full_backup(
+                    device,
+                    name=f"Before restore: {profile.name}",
+                )
+            actions = profile.apply(
                 device,
                 base_state,
                 include_keymap=include_keymap,
                 include_macros=include_macros,
                 include_advanced=include_advanced,
             )
+            return actions, snapshot
 
-        def done(actions):
+        def done(result):
+            actions, snapshot = result
+            suffix = f" Snapshot: {snapshot.name}." if snapshot is not None else ""
             self.notify(
-                f"Applied “{profile.name}”" + (f": {', '.join(actions)}" if actions else " (no changes)")
+                f"Applied “{profile.name}”"
+                + (f": {', '.join(actions)}" if actions else " (no changes)")
+                + suffix
             )
             self.refresh()
 

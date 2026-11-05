@@ -3,11 +3,38 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import tempfile
 from dataclasses import asdict, dataclass, fields
 
 from . import config
+
+# Keep a corrupt or absurd settings file from preventing the window from
+# opening.  These bounds are deliberately generous but finite.
+MIN_WINDOW_WIDTH = 640
+MAX_WINDOW_WIDTH = 8192
+MIN_WINDOW_HEIGHT = 480
+MAX_WINDOW_HEIGHT = 4320
+VALID_THEMES = {"system", "dark", "light"}
+VALID_PAGES = {
+    "overview",
+    "perkey",
+    "lighting",
+    "keymap",
+    "macros",
+    "advanced",
+    "test",
+    "profiles",
+}
+
+
+def _int_setting(value: object, default: int, lower: int, upper: int) -> int:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return default
+    if not math.isfinite(float(value)):
+        return default
+    return max(lower, min(upper, int(value)))
 
 
 @dataclass
@@ -18,10 +45,32 @@ class AppSettings:
     window_height: int = 780
 
     @classmethod
-    def from_json(cls, data: dict) -> "AppSettings":
+    def from_json(cls, data: object) -> "AppSettings":
+        if not isinstance(data, dict):
+            return cls()
         allowed = {field.name for field in fields(cls)}
         clean = {key: value for key, value in data.items() if key in allowed}
-        return cls(**clean)
+
+        theme = clean.get("theme")
+        if not isinstance(theme, str) or theme not in VALID_THEMES:
+            theme = cls.theme
+
+        last_page = clean.get("last_page")
+        if not isinstance(last_page, str) or last_page not in VALID_PAGES:
+            last_page = cls.last_page
+
+        return cls(
+            theme=theme,
+            last_page=last_page,
+            window_width=_int_setting(
+                clean.get("window_width"), cls.window_width,
+                MIN_WINDOW_WIDTH, MAX_WINDOW_WIDTH,
+            ),
+            window_height=_int_setting(
+                clean.get("window_height"), cls.window_height,
+                MIN_WINDOW_HEIGHT, MAX_WINDOW_HEIGHT,
+            ),
+        )
 
 
 def load() -> AppSettings:
