@@ -130,11 +130,17 @@ class PerKeyPage(Page):
             chip = Gtk.Button(label=f"{value:.2f}")
             chip.add_css_class("preset-chip")
             chip.set_tooltip_text(f"Set {value:.2f} mm")
-            chip.connect("clicked", lambda _b, v=value: self.actuation_scale.set_value(v))
+            chip.connect(
+                "clicked",
+                lambda _b, v=value: self.actuation_scale.set_value(v, notify=True),
+            )
             presets.append(chip)
         actuation.add(presets)
         reset = button("Reset selection to 1.50 mm", flat=True)
-        reset.connect("clicked", lambda _b: self.actuation_scale.set_value(1.50))
+        reset.connect(
+            "clicked",
+            lambda _b: self.actuation_scale.set_value(1.50, notify=True),
+        )
         actuation.add(reset)
         controls.append(actuation)
 

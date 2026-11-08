@@ -858,20 +858,25 @@ def safe_filename(name: str) -> str:
     return cleaned.lstrip(".")[:60] or "profile"
 
 
-def list_profiles(directory: Path | None = None) -> list[Profile]:
+def profile_files(directory: Path | None = None) -> list[tuple[Path, Profile]]:
+    """Saved profiles together with the exact file they came from."""
     directory = directory or config.profiles_dir()
-    profiles: list[Profile] = []
+    entries: list[tuple[Path, Profile]] = []
     if not directory.is_dir():
-        return profiles
+        return entries
     for path in sorted(directory.glob("*.json")):
         if path.parent.name == "backups":
             continue
         try:
-            profiles.append(Profile.load(path))
+            entries.append((path, Profile.load(path)))
         except (OSError, ValueError, KeyError, TypeError):
             continue
-    profiles.sort(key=lambda item: item.name.lower())
-    return profiles
+    entries.sort(key=lambda item: item[1].name.lower())
+    return entries
+
+
+def list_profiles(directory: Path | None = None) -> list[Profile]:
+    return [profile for _path, profile in profile_files(directory)]
 
 
 def list_backups(directory: Path | None = None) -> list[tuple[Path, Profile]]:

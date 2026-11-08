@@ -77,6 +77,13 @@ SUB_SET = 0x03
 FLASH_NORMAL = 0x00
 FLASH_ERASE_AND_WRITE = 0x03
 
+
+def _require_len(reply: bytes, minimum: int, what: str) -> None:
+    if len(reply) < minimum:
+        raise ProtocolError(
+            f"{what} returned a short reply ({len(reply)} bytes, expected at least {minimum})"
+        )
+
 REPORT = REPORT_SIZE
 KEYCODE_SIZE = 2
 MAX_BUFFER_CHUNK = REPORT - 1 - 3
@@ -519,7 +526,8 @@ class MadlionsDevice:
     # -- identity ---------------------------------------------------------
     def read_layer_count(self) -> int:
         reply = self._ask(build_report(CMD_DYNAMIC_KEYMAP_GET_LAYER_COUNT), 0x11)
-        return reply[1] if len(reply) > 1 else self.board.layers
+        _require_len(reply, 2, "layer count")
+        return reply[1]
 
     def read_protocol_version(self) -> int | None:
         return self.protocol_version
@@ -533,11 +541,13 @@ class MadlionsDevice:
 
     def read_macro_count(self) -> int:
         reply = self._ask(build_report(CMD_MACRO_GET_COUNT), 0x0C)
-        return reply[1] if len(reply) > 1 else 0
+        _require_len(reply, 2, "macro count")
+        return reply[1]
 
     def read_macro_buffer_size(self) -> int:
         reply = self._ask(build_report(CMD_MACRO_GET_BUFFER_SIZE), 0x0D)
-        return int.from_bytes(reply[1:3], "big") if len(reply) >= 3 else 0
+        _require_len(reply, 3, "macro buffer size")
+        return int.from_bytes(reply[1:3], "big")
 
     def read_calibration_status(self, count: int | None = None) -> list[int]:
         total = self.board.total_keys if count is None else count
@@ -811,7 +821,8 @@ class MadlionsDevice:
 
     def read_game_mode(self) -> int:
         reply = self._ask_vendor(CMD_GET_KEYBOARD_VALUE, V_GAME_MODE)
-        return reply[3] if len(reply) > 3 else 0
+        _require_len(reply, 4, "game mode")
+        return reply[3]
 
     def write_game_mode(self, mode: int) -> None:
         self._guard("changing game mode")
@@ -819,7 +830,8 @@ class MadlionsDevice:
 
     def read_bottom_optimize(self) -> int:
         reply = self._ask_vendor(CMD_GET_KEYBOARD_VALUE, V_BOTTOM_OPTIMIZE)
-        return reply[3] if len(reply) > 3 else 0
+        _require_len(reply, 4, "bottom-out optimisation")
+        return reply[3]
 
     def write_bottom_optimize(self, value: int) -> None:
         self._guard("changing bottom-out optimisation")
@@ -855,7 +867,8 @@ class MadlionsDevice:
             build_report(CMD_DYNAMIC_KEYMAP_GET_KEYCODE, bytes([layer, row, col])),
             CMD_DYNAMIC_KEYMAP_GET_KEYCODE,
         )
-        return int.from_bytes(reply[4:6], "big") if len(reply) >= 6 else 0
+        _require_len(reply, 6, "keycode")
+        return int.from_bytes(reply[4:6], "big")
 
     # -- macros ------------------------------------------------------------
     def read_macros(self) -> bytes:
@@ -936,6 +949,7 @@ class MadlionsDevice:
             CMD_GET_KEYBOARD_VALUE,
             bytes([CUSTOM_CHANNEL, V_DKS]),
         )
+        _require_len(reply, 23, "DKS binding")
         body = reply[7:23]
         actions = tuple(DksAction.from_bytes(body[i:i + 4]) for i in range(0, 16, 4))
         return Dks(index=index, actions=actions)  # type: ignore[arg-type]
@@ -1011,12 +1025,14 @@ class MadlionsDevice:
     def read_one_travel(self, row: int, col: int) -> float:
         reply = self._ask_vendor(CMD_GET_KEYBOARD_VALUE, V_TRIP_SINGLE,
                                  bytes([row, col]), timeout=0.4)
-        return travel_from_raw(int.from_bytes(reply[5:7], "big")) if len(reply) >= 7 else 0.0
+        _require_len(reply, 7, "single travel value")
+        return travel_from_raw(int.from_bytes(reply[5:7], "big"))
 
     def read_one_adc(self, row: int, col: int) -> int:
         reply = self._ask_vendor(CMD_GET_KEYBOARD_VALUE, V_ADC_SINGLE,
                                  bytes([row, col]), timeout=0.4)
-        return int.from_bytes(reply[5:7], "big") if len(reply) >= 7 else 0
+        _require_len(reply, 7, "single ADC value")
+        return int.from_bytes(reply[5:7], "big")
 
     # -- persistence -------------------------------------------------------
     def commit(self) -> None:
@@ -1026,6 +1042,19 @@ class MadlionsDevice:
         triggers = self.read_rapid_trigger()
         self.write_actuation(actuation, flash=FLASH_ERASE_AND_WRITE)
         self.write_rapid_trigger(triggers, flash=FLASH_ERASE_AND_WRITE)
+
+    def save_all(self) -> str | None:
+        """Persist tuning and lighting, returning a lighting warning if any.
+
+        Tuning is committed first.  A lighting failure must not turn a
+        partially successful save into a success message.
+        """
+        self.commit()
+        try:
+            self.save_lighting()
+        except Exception as exc:  # noqa: BLE001 - reported to the caller
+            return str(exc)
+        return None
 
     # -- diagnostics -------------------------------------------------------
     def device_info(self) -> DeviceInfo:

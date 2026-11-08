@@ -18,4 +18,19 @@ rm -f "${DESTDIR}${PREFIX}/share/icons/hicolor/256x256/apps/io.github.madlionsco
 rm -f "${DESTDIR}${PREFIX}/share/icons/hicolor/512x512/apps/io.github.madlionscontrol.MadlionsControl.png"
 rm -f "${DESTDIR}${PREFIX}/lib/udev/rules.d/71-madlions.rules"
 
+if [[ -z "$DESTDIR" ]]; then
+    APPDIR="${PREFIX}/share/applications"
+    ICONDIR="${PREFIX}/share/icons/hicolor"
+    if command -v update-desktop-database >/dev/null; then
+        update-desktop-database "$APPDIR" 2>/dev/null || true
+    fi
+    if command -v gtk-update-icon-cache >/dev/null; then
+        gtk-update-icon-cache -q -t "$ICONDIR" 2>/dev/null || true
+    fi
+    if [[ $EUID -eq 0 ]]; then
+        udevadm control --reload-rules 2>/dev/null || true
+        udevadm trigger --subsystem-match=hidraw 2>/dev/null || true
+    fi
+fi
+
 echo "Madlions Control removed. Profiles in ~/.local/share/madlions-control were kept."

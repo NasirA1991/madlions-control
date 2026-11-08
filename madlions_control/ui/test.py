@@ -16,7 +16,7 @@ from ..lighting import heat_color
 from .keyboard import KeyboardCanvas
 from .widgets import Page, Section, button, label
 
-MAX_TRAVEL = 3.5
+MAX_TRAVEL = 3.4
 HISTORY = 300
 
 
@@ -141,7 +141,7 @@ class TravelGauge(Gtk.DrawingArea):
         cr.move_to(chart_x, bottom + 14)
         cr.show_text("0 mm")
         cr.move_to(chart_x + chart_w - 34, bottom + 14)
-        cr.show_text("3.5 mm")
+        cr.show_text(f"{MAX_TRAVEL:.1f} mm")
 
 
 def _rounded(cr, x, y, w, h, r):
@@ -208,7 +208,7 @@ class TestPage(Page):
             )
             swatch.get_style_context().add_provider(css, 800)
             legend.append(swatch)
-        legend.append(label("3.5 mm", "tiny muted"))
+        legend.append(label(f"{MAX_TRAVEL:.1f} mm", "tiny muted"))
         self.scan_label = label("Idle", "tiny muted")
         spacer = Gtk.Box()
         spacer.set_hexpand(True)

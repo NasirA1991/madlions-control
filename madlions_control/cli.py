@@ -397,16 +397,24 @@ def cmd_reset_tuning(args) -> int:
             print("error: no tuning state to snapshot; reset cancelled", file=sys.stderr)
             return 1
         actions = spec.apply(device, loaded.board)
+        warning = None
         if args.save:
-            device.commit()
-            try:
-                device.save_lighting()
-            except Exception:
-                pass
+            warning = device.save_all()
         print(f"applied {spec.label}: {', '.join(actions)}")
         print(f"snapshot: {snapshot}")
-        print("volatile baseline applied" + (" and saved" if args.save else " (not saved)"))
-        return 0
+        if warning:
+            print(
+                "tuning saved, but lighting was not: "
+                f"{warning}; try the save again",
+                file=sys.stderr,
+            )
+        if not args.save:
+            print("volatile baseline applied (not saved)")
+        elif warning:
+            print("volatile baseline applied; tuning saved, lighting not saved")
+        else:
+            print("volatile baseline applied and saved")
+        return 1 if warning else 0
     finally:
         device.close()
 

@@ -163,8 +163,14 @@ class KeyboardCanvas(Gtk.DrawingArea):
         theme = self.state
         is_dark = True
         try:
-            style = self.get_style_context()
-            is_dark = style.get_color().red < 0.5
+            foreground = self.get_style_context().get_color()
+            # A light foreground means a dark theme (and vice versa).
+            luminance = (
+                0.2126 * foreground.red
+                + 0.7152 * foreground.green
+                + 0.0722 * foreground.blue
+            )
+            is_dark = luminance > 0.5
         except Exception:
             pass
 
@@ -247,7 +253,7 @@ class KeyboardCanvas(Gtk.DrawingArea):
                     idx = key.row * theme.board.cols + key.col
                     if self.mode == "actuation" and idx < len(theme.actuation):
                         value = theme.actuation[idx]
-                        t = max(0.0, min(1.0, (value - 0.05) / 3.35))
+                        t = max(0.0, min(1.0, (value - 0.05) / 3.40))
                         strip = heat_color(t)
                         cr.set_source_rgb(*(channel / 255 for channel in strip))
                         _rounded(cr, x + 4, y + key_h - 6, w - 8, 2.6, 1.3)

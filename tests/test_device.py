@@ -168,3 +168,30 @@ class DeviceProtocolTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SaveAllTests(unittest.TestCase):
+    class _Stub:
+        def __init__(self, lighting_error=None):
+            self.lighting_error = lighting_error
+            self.committed = False
+            self.lighting_saved = False
+
+        def commit(self):
+            self.committed = True
+
+        def save_lighting(self):
+            if self.lighting_error:
+                raise RuntimeError(self.lighting_error)
+            self.lighting_saved = True
+
+    def test_success_returns_none(self):
+        stub = self._Stub()
+        self.assertIsNone(MadlionsDevice.save_all(stub))
+        self.assertTrue(stub.committed)
+        self.assertTrue(stub.lighting_saved)
+
+    def test_lighting_failure_is_reported(self):
+        stub = self._Stub("lighting write failed")
+        self.assertIn("lighting write failed", MadlionsDevice.save_all(stub))
+        self.assertTrue(stub.committed)

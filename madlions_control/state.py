@@ -150,7 +150,11 @@ def load_basic(device: MadlionsDevice, *, include_light: bool = True) -> Keyboar
     state.calibration = device.populated_mask()
     state.actuation = device.read_actuation()
     state.rapid_trigger = device.read_rapid_trigger()
-    state.layers = device.read_layer_count() or board.layers
+    try:
+        state.layers = device.read_layer_count() or board.layers
+    except Exception as exc:  # noqa: BLE001 - optional metadata
+        state.warnings.append(f"layer count: {exc}")
+        state.layers = board.layers
     if include_light:
         for name, reader in (
             ("light", device.read_light),

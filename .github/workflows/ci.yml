@@ -33,6 +33,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y python3-gi python3-cairo gir1.2-gtk-4.0 \
             gir1.2-adw-1 xvfb
+      - name: Widget regression tests
+        run: |
+          xvfb-run -a python3 -m unittest tests.test_widgets -v
+
       - name: Launch every page in demo mode
         run: |
           set -e

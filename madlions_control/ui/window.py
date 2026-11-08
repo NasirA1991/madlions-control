@@ -358,14 +358,16 @@ class MainWindow(Adw.ApplicationWindow):
             return
 
         def job(device):
-            device.commit()
-            try:
-                device.save_lighting()
-            except Exception:
-                pass
+            return device.save_all()
 
-        def done(_result):
-            self.notify("Saved to the keyboard.")
+        def done(warning):
+            if warning:
+                self.notify(
+                    "Tuning was saved, but lighting was not: "
+                    f"{warning}. Try Save to keyboard again."
+                )
+            else:
+                self.notify("Saved to the keyboard.")
 
         def error(exc):
             self.notify(f"Could not save: {exc}")

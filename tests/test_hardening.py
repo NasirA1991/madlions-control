@@ -28,6 +28,10 @@ class ReplyTransport:
             return bytes([0x01, 0, 9]) + bytes(29)
         if cmd == 0x02 and report[1] == 0x96:
             sub = report[2]
+            if self.mode == "short-dks" and sub == 0x0F:
+                return bytes([0x02, 0x96, sub]) + bytes(3)
+            if self.mode == "short-single" and sub in (0x09, 0x0A, 0x1E):
+                return bytes([0x02, 0x96, sub]) + bytes(2)
             offset = (report[5] << 8) | report[6]
             count = report[7]
             if self.mode == "wrong-offset":
@@ -95,6 +99,21 @@ class MalformedReplyTests(unittest.TestCase):
         device, _ = _device()
         with self.assertRaises(ProtocolError):
             device.read_keymap()
+
+    def test_short_dks_reply_raises(self):
+        device, _ = _device("short-dks")
+        with self.assertRaises(ProtocolError):
+            device.read_dks(0)
+
+    def test_short_single_travel_reply_raises(self):
+        device, _ = _device("short-single")
+        with self.assertRaises(ProtocolError):
+            device.read_one_travel(0, 0)
+
+    def test_short_single_adc_reply_raises(self):
+        device, _ = _device("short-single")
+        with self.assertRaises(ProtocolError):
+            device.read_one_adc(0, 0)
 
 
 if __name__ == "__main__":
