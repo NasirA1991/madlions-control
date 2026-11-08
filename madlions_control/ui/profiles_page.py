@@ -161,14 +161,14 @@ class ProfilesPage(Page):
     def _rebuild_saved(self) -> None:
         while child := self.saved_rows.get_first_child():
             self.saved_rows.remove(child)
-        saved = profiles.list_profiles()
+        saved = profiles.profile_files()
         if not saved:
             self.saved_rows.append(
                 label("No saved tuning profiles yet. Use “Save tuning profile”.",
                       "muted small")
             )
             return
-        for index, profile in enumerate(saved):
+        for index, (path, profile) in enumerate(saved):
             widget = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
             widget.add_css_class("list-row")
             text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
@@ -191,7 +191,10 @@ class ProfilesPage(Page):
             delete.set_child(Gtk.Image.new_from_icon_name("user-trash-symbolic"))
             delete.set_tooltip_text("Delete profile")
             delete.add_css_class("flat")
-            delete.connect("clicked", lambda _b, p=profile: self._delete(p, profile_dir=True))
+            delete.connect(
+                "clicked",
+                lambda _b, p=profile, path=path: self._delete(p, path),
+            )
             widget.append(apply)
             widget.append(export)
             widget.append(delete)
@@ -241,7 +244,10 @@ class ProfilesPage(Page):
             delete.set_child(Gtk.Image.new_from_icon_name("user-trash-symbolic"))
             delete.set_tooltip_text("Delete backup file")
             delete.add_css_class("flat")
-            delete.connect("clicked", lambda _b, p=profile: self._delete(p, profile_dir=False))
+            delete.connect(
+                "clicked",
+                lambda _b, p=profile, path=path: self._delete(p, path),
+            )
             row.append(restore)
             row.append(export)
             row.append(delete)
@@ -391,7 +397,7 @@ class ProfilesPage(Page):
 
         dialog.open(self.window, None, done)
 
-    def _delete(self, profile, *, profile_dir: bool) -> None:
+    def _delete(self, profile, path: Path) -> None:
         dialog = Adw.AlertDialog(
             heading=f"Delete “{profile.name}”?",
             body="The file is removed. The keyboard is not changed.",
@@ -405,14 +411,10 @@ class ProfilesPage(Page):
         def response(_dialog, response_id):
             if response_id != "delete":
                 return
-            directory = config.profiles_dir() if profile_dir else config.backups_dir()
-            for path in directory.glob("*.json"):
-                try:
-                    if profiles.Profile.load(path).name == profile.name:
-                        path.unlink()
-                        break
-                except (OSError, ValueError):
-                    continue
+            try:
+                path.unlink()
+            except OSError as exc:
+                self.window.notify(f"Could not delete {profile.name!r}: {exc}")
             self._rebuild()
 
         dialog.connect("response", response)

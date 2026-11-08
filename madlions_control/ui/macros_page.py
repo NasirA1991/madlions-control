@@ -26,6 +26,7 @@ class MacrosPage(Page):
         self.steps: list[macros_codec.MacroStep] = []
         self._loading = False
         self._slot_buttons: list[Gtk.Button] = []
+        self._edit_buttons: list[Gtk.Button] = []
         self._build()
 
     def _build(self) -> None:
@@ -39,7 +40,7 @@ class MacrosPage(Page):
         ))
 
         content = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
-        left = Section("Slots", "Sixteen independent sequences.")
+        left = Section("Slots", f"{self._count()} independent sequences.")
         left.set_size_request(300, -1)
         self.slots_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         scroller = Gtk.ScrolledWindow()
@@ -80,12 +81,15 @@ class MacrosPage(Page):
             btn = button(title, flat=True)
             btn.connect("clicked", lambda _b, k=kind: self._add_key(k))
             row.append(btn)
+            self._edit_buttons.append(btn)
         delay = button("Delay", flat=True)
         delay.connect("clicked", lambda _b: self._add_delay())
         row.append(delay)
+        self._edit_buttons.append(delay)
         text = button("Text", flat=True)
         text.connect("clicked", lambda _b: self._add_text())
         row.append(text)
+        self._edit_buttons.append(text)
         adds.add(row)
         adds.add(label(
             "A key tap is a press and release; use Press/Release for holds. "
@@ -94,9 +98,9 @@ class MacrosPage(Page):
         ))
         right.append(adds)
 
-        clear = button("Clear this slot", flat=True)
-        clear.connect("clicked", lambda _b: self._clear())
-        right.append(clear)
+        self.clear_button = button("Clear this slot", flat=True)
+        self.clear_button.connect("clicked", lambda _b: self._clear())
+        right.append(self.clear_button)
         content.append(right)
         self.add(content)
 
@@ -114,6 +118,11 @@ class MacrosPage(Page):
         self._load()
 
     def on_state(self, state) -> None:
+        writable = bool(state.writable)
+        self.save_button.set_sensitive(writable)
+        self.clear_button.set_sensitive(writable)
+        for button_widget in self._edit_buttons:
+            button_widget.set_sensitive(writable)
         if state.connected and not state.macros:
             self._load()
         self._build_slots()
@@ -191,6 +200,7 @@ class MacrosPage(Page):
             remove.set_child(Gtk.Image.new_from_icon_name("user-trash-symbolic"))
             remove.add_css_class("flat")
             remove.set_tooltip_text("Remove this step")
+            remove.set_sensitive(bool(self.window.state.writable))
             remove.connect("clicked", lambda _b, i=index: self._remove_step(i))
             row.append(remove)
             self.steps_box.append(row)
@@ -206,6 +216,10 @@ class MacrosPage(Page):
 
     # -- editing -----------------------------------------------------------
     def _add_key(self, kind: str) -> None:
+        if not self.window.state.writable:
+            self.window.notify("The session is read-only.")
+            return
+
         def selected(code: int) -> None:
             self.steps.append(macros_codec.MacroStep(kind, keycode=code))
             self._render_steps()
@@ -213,6 +227,9 @@ class MacrosPage(Page):
         KeycodeDialog(0, selected).present(self.window)
 
     def _add_delay(self) -> None:
+        if not self.window.state.writable:
+            self.window.notify("The session is read-only.")
+            return
         dialog = Adw.AlertDialog(heading="Add delay", body="Pause between steps.")
         spin = Gtk.SpinButton.new_with_range(0, 2000, 10)
         spin.set_value(80)
@@ -232,6 +249,9 @@ class MacrosPage(Page):
         dialog.present(self.window)
 
     def _add_text(self) -> None:
+        if not self.window.state.writable:
+            self.window.notify("The session is read-only.")
+            return
         dialog = Adw.AlertDialog(
             heading="Add text",
             body="The keyboard types this literally while the macro runs.",
@@ -254,6 +274,9 @@ class MacrosPage(Page):
         dialog.present(self.window)
 
     def _remove_step(self, index: int) -> None:
+        if not self.window.state.writable:
+            self.window.notify("The session is read-only.")
+            return
         if 0 <= index < len(self.steps):
             del self.steps[index]
             self._render_steps()
@@ -307,10 +330,12 @@ class MacrosPage(Page):
                     "the macro buffer did not read back after writing"
                 )
 
+        def done(_result):
+            self.window.notify(f"Macro {self.slot + 1} saved.")
+            self._build_slots()
+
         def error(exc):
             self.window.notify(f"Macro not saved: {exc}")
             self.window.refresh()
 
-        self.window.worker.submit(job, error=error, description="macro")
-        self.window.notify(f"Macro {self.slot + 1} saved.")
-        self._build_slots()
+        self.window.worker.submit(job, callback=done, error=error, description="macro")

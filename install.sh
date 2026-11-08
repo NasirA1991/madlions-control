@@ -26,6 +26,9 @@ if [[ $USER_INSTALL -eq 1 ]]; then
     echo "Installing to ${PREFIX} (user)"
 fi
 
+# Work from the checkout even when invoked through an absolute path.
+cd "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
 LIBDIR="${DESTDIR}${PREFIX}/lib/madlions-control"
 BINDIR="${DESTDIR}${PREFIX}/bin"
 APPDIR="${DESTDIR}${PREFIX}/share/applications"

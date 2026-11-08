@@ -342,6 +342,11 @@ class DemoBackend:
     def commit(self):
         pass
 
+    def save_all(self) -> None:
+        self.commit()
+        self.save_lighting()
+        return None
+
     def read_report(self) -> dict:
         return {
             "board": self.board.name,

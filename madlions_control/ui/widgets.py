@@ -222,13 +222,21 @@ class LabeledScale(Gtk.Box):
             return
         self._on_change(value)
 
-    def set_value(self, value: float) -> None:
+    def set_value(self, value: float, *, notify: bool = False) -> None:
+        """Set the scale without emitting on_change unless explicitly asked.
+
+        State refreshes must stay silent, but preset/reset actions use
+        notify=True so they actually apply the value.
+        """
         self._updating = True
         try:
             self.scale.set_value(value)
         finally:
             self._updating = False
-        self._render(value)
+        current = self.scale.get_value()
+        self._render(current)
+        if notify and self._on_change is not None:
+            self._on_change(current)
 
     def set_sensitive(self, sensitive: bool) -> None:
         super().set_sensitive(sensitive)

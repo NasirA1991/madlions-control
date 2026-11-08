@@ -180,3 +180,21 @@ class PersistentReadbackTests(unittest.TestCase):
         backend = _BadMacroRead()
         with self.assertRaises(profiles.ProfileValidationError):
             profile.apply(backend, state, include_macros=True)
+
+
+class ProfileFilePathTests(unittest.TestCase):
+    def test_profile_files_keep_exact_paths(self):
+        data = {
+            "profile_version": 3,
+            "name": "Duplicate",
+            "actuation": {"default_mm": 1.5, "overrides": {}},
+            "rapid_trigger": {"default": {"enabled": False, "press_mm": 0.5,
+                                          "release_mm": 0.5},
+                              "overrides": {}},
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            profile = profiles.Profile.from_json(data)
+            path = profile.save(directory)
+            entries = profiles.profile_files(directory)
+            self.assertEqual(entries, [(path, profile)])

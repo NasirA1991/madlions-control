@@ -218,7 +218,7 @@ class LightingPage(Page):
         self.side_mode = Gtk.DropDown.new_from_strings(
             ["Off", "Mode 1", "Mode 2", "Mode 3", "Mode 4", "Mode 5"]
         )
-        self.side_mode.connect("notify::selected", lambda *_a: self._side_debounce.trigger())
+        self.side_mode.connect("notify::selected", self._side_changed)
         side_mode_row.append(self.side_mode)
         side.add(side_mode_row)
         self.side_colorful = SwitchRow("Multi-colour", "Let the side light cycle through colours.",
@@ -419,7 +419,7 @@ class LightingPage(Page):
 
         self.window.worker.submit(job, error=error, description="key colour")
 
-    def _side_changed(self) -> None:
+    def _side_changed(self, *_args) -> None:
         if self._suppress:
             return
         self._side_debounce.trigger()

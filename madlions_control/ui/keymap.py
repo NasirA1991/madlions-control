@@ -160,7 +160,10 @@ class KeymapPage(Page):
         ))
         controls.append(actions)
 
-        layers = Section("Layers", "Each layer has its own 68-key map.")
+        layers = Section(
+            "Layers",
+            f"Each layer has its own {self.window.state.board.total_keys}-key map.",
+        )
         self.layer_info = label("", "row-sub", wrap=True)
         layers.add(self.layer_info)
         layers.add(label(
@@ -283,12 +286,14 @@ class KeymapPage(Page):
         def job(device):
             device.write_keycode(layer, row, col, code)
 
+        def done(_result):
+            physical = layout.key_at(state.board, row, col)
+            self.window.notify(
+                f"{physical.label if physical else f'{row},{col}'} → {keycodes.label(code)}"
+            )
+
         def error(exc):
             self.window.notify(f"Key not written: {exc}")
             self.window.refresh()
 
-        self.window.worker.submit(job, error=error, description="keycode")
-        physical = layout.key_at(state.board, row, col)
-        self.window.notify(
-            f"{physical.label if physical else f'{row},{col}'} → {keycodes.label(code)}"
-        )
+        self.window.worker.submit(job, callback=done, error=error, description="keycode")
