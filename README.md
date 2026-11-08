@@ -32,7 +32,7 @@ the full [Installation](#installation) section for dependencies and source insta
 
 **On this page:** [Features](#features) · [Supported keyboards](#supported-keyboards) · [Installation](#installation) · [CLI](#cli) · [Troubleshooting](#troubleshooting)
 
-![Overview](docs/screenshots/overview-0.3.2.png)
+![Overview](docs/screenshots/overview-0.3.3.png)
 
 ## Why
 
@@ -55,7 +55,7 @@ feel of every single key**.
 - Colour heat map shows the actuation value of every cap.
 - Changes apply live; **Save to keyboard** is the only thing that writes flash.
 
-![Per-key](docs/screenshots/per-key-0.3.2.png)
+![Per-key](docs/screenshots/per-key-0.3.3.png)
 
 ### Live analogue test
 

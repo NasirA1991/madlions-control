@@ -36,11 +36,11 @@
   <screenshots>
     <screenshot type="default">
       <caption>The overview keeps every important value in one place</caption>
-      <image>https://raw.githubusercontent.com/NasirA1991/madlions-control/main/docs/screenshots/overview-0.3.2.png</image>
+      <image>https://raw.githubusercontent.com/NasirA1991/madlions-control/main/docs/screenshots/overview-0.3.3.png</image>
     </screenshot>
     <screenshot>
       <caption>Per-key actuation and rapid trigger</caption>
-      <image>https://raw.githubusercontent.com/NasirA1991/madlions-control/main/docs/screenshots/per-key-0.3.2.png</image>
+      <image>https://raw.githubusercontent.com/NasirA1991/madlions-control/main/docs/screenshots/per-key-0.3.3.png</image>
     </screenshot>
     <screenshot>
       <caption>Live analogue travel test</caption>
@@ -48,6 +48,18 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.3.3" date="2026-11-08">
+      <description>
+        <p>Correctness and safety fixes for editing and restoring settings.</p>
+        <ul>
+          <li>Actuation preset and reset buttons now apply the selected value.</li>
+          <li>Lighting refreshes no longer trigger unintended side-light writes.</li>
+          <li>Saving reports a lighting-save failure instead of claiming full success.</li>
+          <li>Keymap and macro restores are verified by read-back, with shorter replies rejected.</li>
+          <li>Read-only macro editing is disabled, and backup deletion uses the exact file path.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.3.2" date="2026-11-04">
       <description>
         <p>Restored the smooth live test view.</p>

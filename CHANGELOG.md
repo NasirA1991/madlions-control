@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.3 — 2026-11-08
+
+### Fixed
+
+- Preset and reset actuation buttons now apply the selected travel value.
+- Programmatic lighting refreshes no longer trigger side-light writes.
+- Saving to the keyboard reports a lighting-save failure instead of claiming full success.
+- Keymap and macro success messages wait for the worker and read-back check.
+- Macro editing controls are disabled in read-only sessions.
+- Backup/profile deletion uses the exact file path instead of matching by display name.
+- Short DKS, telemetry, keycode and optional-value replies now raise instead of being read as zero.
+- Dark/light keyboard canvas detection, hardcoded key-count labels and max-travel constants are consistent.
+- The installed udev rule matches the generated rule; install/uninstall paths and cache refresh are more robust.
+
+### Tests
+
+- Added widget regression tests for programmatic scale updates and side-light suppression.
+- Added short-reply regression tests for DKS and single telemetry reads.
+- Added profile-path and partial-save tests.
+
 ## 0.3.2 — 2026-11-04
 
 ### Changed
