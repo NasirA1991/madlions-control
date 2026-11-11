@@ -140,6 +140,9 @@ class AdvancedKeyDialog(Adw.Dialog):
         self.mt_box.append(self._labelled("Hold sends", self.mt_hold))
         self.mt_box.append(self.mt_timer)
         box.append(self.mt_box)
+        self.error_label = label("", "error", wrap=True)
+        self.error_label.set_visible(False)
+        box.append(self.error_label)
 
         scroller = Gtk.ScrolledWindow()
         scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
@@ -178,15 +181,31 @@ class AdvancedKeyDialog(Adw.Dialog):
         self.layer_row.set_visible(value is not None and not is_mt)
         self.mt_box.set_visible(is_mt)
 
+    def _show_error(self, message: str) -> None:
+        self.error_label.set_text(message)
+        self.error_label.set_visible(True)
+
     def _save(self) -> None:
         value = MODE_NAMES[self.mode.get_selected()][0]
         row1, col1 = self.options[self.key1.get_selected()][:2] if self.options else (0, 0)
         row2, col2 = self.options[self.key2.get_selected()][:2] if self.options else (0, 0)
         if value == "MT":
-            tap = keycodes.from_name(self.mt_tap.get_text()) or 0
-            hold = keycodes.from_name(self.mt_hold.get_text()) or 0
+            if self._index >= 8:
+                self._show_error(
+                    "Hold / click is only available for slots 0–7. "
+                    "Choose a different behaviour for this slot."
+                )
+                return
+            tap = keycodes.from_name(self.mt_tap.get_text())
+            hold = keycodes.from_name(self.mt_hold.get_text())
+            if tap is None or not self.mt_tap.get_text().strip():
+                self._show_error("Tap must be a valid key name, for example Space.")
+                return
+            if hold is None or not self.mt_hold.get_text().strip():
+                self._show_error("Hold must be a valid key name, for example MO(1).")
+                return
             self._on_save("tap", TapDance(
-                index=self._index % 8,
+                index=self._index,
                 tap=tap,
                 hold=hold,
                 timer_ms=int(self.mt_timer.scale.get_value()),
@@ -255,18 +274,44 @@ class DksDialog(Adw.Dialog):
             grid.attach(status_entry, 1, slot + 1, 1, 1)
             self.entries.append((key_entry, status_entry))
         box.append(grid)
+        self.error_label = label("", "error", wrap=True)
+        self.error_label.set_visible(False)
+        box.append(self.error_label)
         view.set_content(box)
         self.set_child(view)
 
+    def _show_error(self, message: str) -> None:
+        self.error_label.set_text(message)
+        self.error_label.set_visible(True)
+
     def _save(self) -> None:
         actions = []
-        for key_entry, status_entry in self.entries:
-            keycode = keycodes.from_name(key_entry.get_text()) or 0
-            try:
-                status = int(status_entry.get_text() or "0", 16)
-            except ValueError:
+        for slot, (key_entry, status_entry) in enumerate(self.entries, start=1):
+            key_text = key_entry.get_text().strip()
+            keycode = keycodes.from_name(key_text) if key_text else 0
+            if key_text and keycode is None:
+                self._show_error(
+                    f"Keystroke {slot} is not a known key name. "
+                    "Use a name such as Space, or clear the field."
+                )
+                return
+            status_text = status_entry.get_text().strip()
+            if status_text:
+                try:
+                    status = int(status_text, 16)
+                except ValueError:
+                    self._show_error(
+                        f"Status {slot} must be hexadecimal between 000 and 3ff."
+                    )
+                    return
+                if not 0 <= status <= 0x3FF:
+                    self._show_error(
+                        f"Status {slot} must be hexadecimal between 000 and 3ff."
+                    )
+                    return
+            else:
                 status = 0
-            actions.append(DksAction(status=status & 0x3FF, keycode=keycode))
+            actions.append(DksAction(status=status, keycode=keycode))
         self._on_save(Dks(index=self._index, actions=tuple(actions)))
         self.close()
 
@@ -359,8 +404,8 @@ class AdvancedPage(Page):
         self.advanced_rows = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         advanced.add(self.advanced_rows)
         advanced.add(label(
-            "A slot can be rebound at any time. Nothing here touches flash until "
-            "you save.",
+            "A slot can be rebound at any time. These bindings are written to the "
+            "keyboard immediately, not held for the tuning Save button.",
             "tiny muted", wrap=True,
         ))
         self.add(advanced)

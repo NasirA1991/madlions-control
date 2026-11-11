@@ -317,9 +317,16 @@ class PerKeyPage(Page):
         if not values:
             return
         selected = set(self.selected)
+        cols = self.window.state.board.cols
 
         def job(device):
-            device.write_actuation(values)
+            if len(selected) <= 4:
+                for row, col in selected:
+                    device.write_one_actuation(
+                        row, col, values[row * cols + col]
+                    )
+            else:
+                device.write_actuation(values)
             return len(selected)
 
         def error(exc):
@@ -335,9 +342,16 @@ class PerKeyPage(Page):
         if not values:
             return
         selected = set(self.selected)
+        cols = self.window.state.board.cols
 
         def job(device):
-            device.write_rapid_trigger(values)
+            if len(selected) <= 4:
+                for row, col in selected:
+                    device.write_one_rapid_trigger(
+                        row, col, values[row * cols + col]
+                    )
+            else:
+                device.write_rapid_trigger(values)
             return len(selected)
 
         def error(exc):

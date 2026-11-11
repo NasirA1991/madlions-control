@@ -12,7 +12,7 @@ from dataclasses import dataclass, field, replace
 from enum import IntEnum
 from typing import Callable, Iterator
 
-from . import boards
+from . import boards, layout
 from .config import VID
 from .transport import (
     REPORT_SIZE,
@@ -342,7 +342,7 @@ class MadlionsDevice:
             info = find_supported()
         if not info.supported:
             raise UnsupportedDevice(info.reason or "this HID collection is unsupported")
-        transport = HidrawTransport(info, debug=debug)
+        transport = HidrawTransport(info, debug=debug, read_only=read_only)
         transport.open()
         device = cls(info, transport, read_only=read_only, allow_unverified=allow_unverified)
         try:
@@ -566,13 +566,25 @@ class MadlionsDevice:
         return out[:total]
 
     def populated_mask(self) -> list[bool]:
+        """Cells that physically exist on this board.
+
+        Firmware returns an all-zero calibration mask on some healthy boards;
+        that must not be mistaken for "all 75 matrix cells exist".  Fall back
+        to the known physical layout instead, and keep all-True only for an
+        unknown grid.
+        """
         try:
             flags = self.read_calibration_status()
-            if not any(flags):
-                return [True] * self.board.total_keys
-            return [bool(value) for value in flags]
+            if any(flags):
+                return [bool(value) for value in flags]
         except ProtocolError:
-            return [True] * self.board.total_keys
+            pass
+        mask = [False] * self.board.total_keys
+        for key in layout.keys_for(self.board):
+            index = key.row * self.board.cols + key.col
+            if 0 <= index < len(mask):
+                mask[index] = True
+        return mask or [True] * self.board.total_keys
 
     # -- actuation / rapid trigger ---------------------------------------
     def read_actuation(self) -> list[float]:
@@ -1072,13 +1084,16 @@ class MadlionsDevice:
             read_only_reason=self._read_only_reason,
         )
 
-    def read_report(self, safe_only: bool = True) -> dict:
-        """A read-only diagnostic snapshot for issue reports."""
+    def read_report(self, *, include_serial: bool = False) -> dict:
+        """A read-only diagnostic snapshot for issue reports.
+
+        The USB serial is redacted unless the caller explicitly opts in.
+        """
         result: dict = {
             "board": self.board.name,
             "usb_id": self.info.usb_id,
             "product_name": self.info.product_name,
-            "serial": self.info.serial,
+            "serial": self.info.serial if include_serial else "redacted",
             "hidraw": self.info.hidraw,
             "protocol_version": self.protocol_version,
             "writable": self._writable,

@@ -477,7 +477,11 @@ class Profile:
                     raise ProfileValidationError(f"unknown section {section!r}")
             captured_sections = list(dict.fromkeys(str(section) for section in captured))
         else:
-            captured_sections = ["actuation", "rapid_trigger"]
+            captured_sections = []
+            if "actuation" in data:
+                captured_sections.append("actuation")
+            if "rapid_trigger" in data:
+                captured_sections.append("rapid_trigger")
             if light_info is not None:
                 captured_sections.append("lighting")
             if colors:
@@ -535,7 +539,7 @@ class Profile:
             dks=dks,
         )
 
-    def save(self, directory: Path | None = None) -> Path:
+    def save(self, directory: Path | None = None, *, overwrite: bool = False) -> Path:
         directory = directory or config.profiles_dir()
         directory.mkdir(parents=True, exist_ok=True)
         base = safe_filename(self.name)
@@ -545,6 +549,11 @@ class Profile:
                 existing_name = json.loads(path.read_text(encoding="utf-8-sig")).get("name")
             except (OSError, ValueError):
                 existing_name = None
+            if existing_name == self.name and not overwrite:
+                raise ProfileValidationError(
+                    f"a profile named {self.name!r} already exists; "
+                    "choose another name or overwrite it"
+                )
             if existing_name != self.name:
                 suffix = hashlib.sha1(self.name.encode("utf-8")).hexdigest()[:8]
                 path = directory / f"{base}-{suffix}.json"
@@ -709,44 +718,50 @@ class Profile:
                         f"the {board.rows}x{board.cols} matrix"
                     )
 
+        sections = set(self.captured_sections)
         target_act = [self.actuation_for(row, col)
                       for row in range(board.rows) for col in range(board.cols)]
         target_rt = [self.rt_for(row, col)
                      for row in range(board.rows) for col in range(board.cols)]
-        if any(abs(a - b) > 0.001 for a, b in zip(target_act, state.actuation)) or not state.actuation:
+        if ("actuation" in sections
+                and (any(abs(a - b) > 0.001
+                         for a, b in zip(target_act, state.actuation))
+                     or not state.actuation)):
             device.write_actuation(target_act)
             actions.append(f"{len(target_act)} actuation values")
 
-        if any(a != b for a, b in zip(target_rt, state.rapid_trigger)) or not state.rapid_trigger:
+        if ("rapid_trigger" in sections
+                and (any(a != b for a, b in zip(target_rt, state.rapid_trigger))
+                     or not state.rapid_trigger)):
             device.write_rapid_trigger(target_rt)
             actions.append(f"{len(target_rt)} rapid-trigger values")
 
-        if self.light is not None:
+        if "lighting" in sections and self.light is not None:
             device.write_light(self.light)
             actions.append("lighting")
 
-        if self.colors:
+        if "per-key_colours" in sections and self.colors:
             colors = fit_colors(self.colors, self.colors_cols, board.rows, board.cols)
             device.write_all_key_colors(colors)
             actions.append("per-key colours")
 
-        if self.features is not None:
+        if "switches" in sections and self.features is not None:
             device.write_features(self.features)
             actions.append("keyboard switches")
 
-        if self.dead_band is not None:
+        if "dead_band" in sections and self.dead_band is not None:
             device.write_dead_band(self.dead_band)
             actions.append("dead band")
 
-        if self.game_mode is not None:
+        if "game_mode" in sections and self.game_mode is not None:
             device.write_game_mode(self.game_mode)
             actions.append("game mode")
 
-        if self.bottom_optimize is not None:
+        if "bottom_optimize" in sections and self.bottom_optimize is not None:
             device.write_bottom_optimize(self.bottom_optimize)
             actions.append("bottom-out optimisation")
 
-        if self.box_light is not None and board.side_light:
+        if "side_light" in sections and self.box_light is not None and board.side_light:
             device.write_box_light(self.box_light)
             actions.append("side light")
 
@@ -877,6 +892,16 @@ def profile_files(directory: Path | None = None) -> list[tuple[Path, Profile]]:
 
 def list_profiles(directory: Path | None = None) -> list[Profile]:
     return [profile for _path, profile in profile_files(directory)]
+
+
+def directory_signature(directory: Path | None = None) -> tuple[int, int]:
+    """Cheap invalidation key for a profile directory (no JSON parsing)."""
+    directory = directory or config.profiles_dir()
+    try:
+        stat = directory.stat()
+    except OSError:
+        return (0, 0)
+    return (stat.st_mtime_ns, stat.st_size)
 
 
 def list_backups(directory: Path | None = None) -> list[tuple[Path, Profile]]:

@@ -444,7 +444,10 @@ def cmd_profile(args) -> int:
                 profile = profiles.Profile.capture(
                     loaded, args.name, "Saved from the command line", full=False,
                 )
-            path = profile.save(config.backups_dir() if args.full else None)
+            path = profile.save(
+                config.backups_dir() if args.full else None,
+                overwrite=bool(args.force),
+            )
             print(f"saved {path} ({'full' if profile.is_full else 'tuning'})")
             return 0
         if args.profile_action == "backup":
@@ -464,6 +467,13 @@ def cmd_profile(args) -> int:
                 matches = [p for p in profiles.presets() if p.name.lower() == args.name.lower()]
             if not matches:
                 print(f"no profile named {args.name!r}", file=sys.stderr)
+                return 1
+            if len(matches) > 1:
+                print(
+                    f"profile name {args.name!r} is ambiguous; candidates: "
+                    + ", ".join(sorted(profile.name for profile in matches)),
+                    file=sys.stderr,
+                )
                 return 1
             profile = matches[0]
             if profile.has_persistent_sections and not args.persistent:
@@ -509,7 +519,7 @@ def cmd_profile(args) -> int:
 def cmd_report(args) -> int:
     device, _loaded = _open_device(args)
     try:
-        report = device.read_report()
+        report = device.read_report(include_serial=bool(args.serial))
         if args.json:
             print(json.dumps(report, indent=2, default=str))
         else:
@@ -631,6 +641,8 @@ def build_parser() -> argparse.ArgumentParser:
     profile_save.add_argument("name")
     profile_save.add_argument("--full", action="store_true",
                               help="capture a full backup, including persistent sections")
+    profile_save.add_argument("--force", action="store_true",
+                              help="overwrite a profile with the same name")
     profile_save.set_defaults(func=cmd_profile)
     profile_apply = profile_sub.add_parser("apply")
     profile_apply.add_argument("name")
@@ -644,6 +656,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     report = sub.add_parser("report", help="read-only diagnostics")
     report.add_argument("--json", action="store_true")
+    report.add_argument("--serial", action="store_true",
+                        help="include the USB serial (redacted by default)")
     report.set_defaults(func=cmd_report)
 
     test = sub.add_parser("test", help="print live key travel")

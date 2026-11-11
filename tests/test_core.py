@@ -149,3 +149,11 @@ class DemoStateTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MacroUnknownOpcodeTests(unittest.TestCase):
+    def test_unknown_opcode_round_trips(self):
+        from madlions_control import macros_codec
+
+        raw = b"a\x01\x7fb\x01"
+        self.assertEqual(macros_codec.encode(macros_codec.decode(raw)), raw)

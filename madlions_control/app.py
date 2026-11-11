@@ -59,6 +59,15 @@ class MadlionsApplication(Adw.Application):
             on_event=self._on_worker_event,
         )
         self.worker.start()
+        for action, accel in (
+            ("win.save", "<Control>s"),
+            ("win.refresh", "<Control>r"),
+            ("win.shortcuts", "<Control>question"),
+            ("app.quit", "<Control>q"),
+        ):
+            self.set_accels_for_action(action, [accel])
+        for number in range(1, 9):
+            self.set_accels_for_action(f"win.page-{number}", [f"<Control>{number}"])
 
     def _apply_theme(self) -> None:
         style = Adw.StyleManager.get_default()

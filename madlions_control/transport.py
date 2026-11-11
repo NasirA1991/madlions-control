@@ -9,6 +9,7 @@ interfaces in different orders.
 from __future__ import annotations
 
 import errno
+import fcntl
 import os
 import select
 import time
@@ -34,6 +35,10 @@ class DeviceError(RuntimeError):
 
 class DeviceNotFound(DeviceError):
     pass
+
+
+class DeviceBusy(DeviceError):
+    """Another process already owns the keyboard's configuration channel."""
 
 
 class PermissionDenied(DeviceError):
@@ -225,10 +230,12 @@ def udev_rule() -> str:
 class HidrawTransport:
     """Blocking-ish request/response transport over one hidraw node."""
 
-    def __init__(self, info: HidInfo, *, timeout: float = 1.0, debug: bool = False) -> None:
+    def __init__(self, info: HidInfo, *, timeout: float = 1.0, debug: bool = False,
+                 read_only: bool = False) -> None:
         self.info = info
         self.timeout = timeout
         self.debug = debug
+        self.read_only = read_only
         self.fd = -1
         self.prefix = b""
         self._auto_prefix = True
@@ -241,8 +248,9 @@ class HidrawTransport:
     def open(self) -> None:
         if self.fd >= 0:
             return
+        flags = os.O_RDONLY if self.read_only else os.O_RDWR
         try:
-            self.fd = os.open(self.info.path, os.O_RDWR | os.O_NONBLOCK)
+            self.fd = os.open(self.info.path, flags | os.O_NONBLOCK)
         except PermissionError as exc:
             raise PermissionDenied(
                 f"Permission denied opening {self.info.path}. Install the udev "
@@ -252,6 +260,15 @@ class HidrawTransport:
             raise DeviceNotFound(f"{self.info.path} disappeared") from exc
         except OSError as exc:
             raise DeviceError(f"Could not open {self.info.path}: {exc}") from exc
+        try:
+            fcntl.flock(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            os.close(self.fd)
+            self.fd = -1
+            raise DeviceBusy(
+                f"{self.info.path} is already in use by another process; "
+                "close the other Madlions Control or madlionsctl session and retry"
+            ) from exc
 
     def close(self) -> None:
         if self.fd >= 0:
