@@ -65,7 +65,7 @@ Close the other session and retry. Do not run two writers against one keyboard.
 |---|---|
 | `--device DEVICE` | Select a keyboard by path, hidraw name, or USB ID. |
 | `--demo` | Use a simulated keyboard. |
-| `--allow-unverified` | Permit writes on an unverified board. This bypasses the default read-only protection and is intentionally dangerous. |
+| `--allow-unverified` | Permit writes on an unverified board. This bypasses the default read-only protection and is intentionally dangerous; it does not bypass the firmware protocol check. |
 | `--version` | Print the CLI version. |
 
 `--help` works before or after a subcommand:

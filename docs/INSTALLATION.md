@@ -11,8 +11,8 @@ work but do not remove the need for a host udev rule.
 |---|---|---|---|
 | AUR `madlions-control` | Yes | Yes | Arch Linux users who want a packaged release. |
 | AUR `madlions-control-git` | Yes | Yes | Arch Linux users who want `main`. |
-| Flatpak | No | No | A sandboxed GUI with the GNOME runtime. |
-| AppImage | No | No | A portable GUI with no package manager. |
+| Flatpak | No | No (manual rule) | A sandboxed GUI with the GNOME runtime. |
+| AppImage | No | No (manual rule) | A portable GUI with no package manager. |
 | Source | Yes | System install only | Development, packaging, or a `--user` install. |
 
 All methods use the same application data format, so profiles can be copied
