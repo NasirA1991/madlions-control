@@ -11,14 +11,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Install test dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3-cairo appstream desktop-file-utils shellcheck
+        run: bash packaging/ci/install-apt-packages.sh python3-cairo appstream desktop-file-utils shellcheck
       - name: Validate metadata and scripts
         run: |
           appstreamcli validate --no-net data/metainfo/io.github.madlionscontrol.MadlionsControl.metainfo.xml
           desktop-file-validate data/io.github.madlionscontrol.MadlionsControl.desktop
-          shellcheck install.sh uninstall.sh packaging/appimage/build.sh packaging/flatpak/build.sh
+          shellcheck install.sh uninstall.sh packaging/appimage/build.sh packaging/flatpak/build.sh packaging/ci/install-apt-packages.sh
       - name: Unit tests
         run: python3 -m unittest discover -s tests -v
       - name: Byte-compile
@@ -29,10 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Install GTK stack
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3-gi python3-cairo gir1.2-gtk-4.0 \
-            gir1.2-adw-1 xvfb
+        run: bash packaging/ci/install-apt-packages.sh python3-gi python3-cairo gir1.2-gtk-4.0 gir1.2-adw-1 xvfb
       - name: Widget regression tests
         run: |
           xvfb-run -a python3 -m unittest tests.test_widgets -v

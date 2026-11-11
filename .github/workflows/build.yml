@@ -36,8 +36,7 @@ jobs:
           echo "value=${VERSION}.g${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
       - name: Install Flatpak tooling
         run: |
-          sudo apt-get update
-          sudo apt-get install -y flatpak flatpak-builder
+          bash packaging/ci/install-apt-packages.sh flatpak flatpak-builder
           sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
           sudo flatpak install -y --noninteractive flathub org.gnome.Platform//50 org.gnome.Sdk//50
       - name: Build Flatpak
