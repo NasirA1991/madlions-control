@@ -198,3 +198,35 @@ class ProfileFilePathTests(unittest.TestCase):
             path = profile.save(directory)
             entries = profiles.profile_files(directory)
             self.assertEqual(entries, [(path, profile)])
+
+
+class SectionGatingTests(unittest.TestCase):
+    def test_lighting_only_profile_does_not_touch_tuning(self):
+        profile = profiles.Profile.from_json({
+            "profile_version": 3,
+            "name": "Light only",
+            "light": {"effect": 2, "speed": 100, "r": 1, "g": 2, "b": 3,
+                      "brightness": 100},
+        })
+        self.assertNotIn("actuation", profile.captured_sections)
+        self.assertNotIn("rapid_trigger", profile.captured_sections)
+
+        backend = demo.DemoBackend()
+        before = backend.read_actuation()
+        state = state_mod.load_basic(backend)
+        actions = profile.apply(backend, state)
+        self.assertNotIn("actuation values", actions)
+        self.assertNotIn("rapid-trigger values", actions)
+        self.assertEqual(backend.read_actuation(), before)
+
+
+class ProfileOverwriteTests(unittest.TestCase):
+    def test_same_name_requires_overwrite(self):
+        with tempfile.TemporaryDirectory() as folder:
+            directory = Path(folder)
+            first = profiles.Profile(name="Daily")
+            first.save(directory)
+            with self.assertRaises(profiles.ProfileValidationError):
+                profiles.Profile(name="Daily").save(directory)
+            profiles.Profile(name="Daily").save(directory, overwrite=True)
+            self.assertEqual(len(list(directory.glob("*.json"))), 1)

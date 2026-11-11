@@ -347,11 +347,12 @@ class DemoBackend:
         self.save_lighting()
         return None
 
-    def read_report(self) -> dict:
+    def read_report(self, *, include_serial: bool = False) -> dict:
         return {
             "board": self.board.name,
             "usb_id": "373B:1058",
             "product_name": "MAD68",
+            "serial": "MAD HE" if include_serial else "redacted",
             "hidraw": "demo0",
             "protocol_version": 9,
             "writable": True,

@@ -24,6 +24,7 @@ class ProfilesPage(Page):
     def __init__(self, window) -> None:
         super().__init__(window, max_width=1040)
         self._full_busy = False
+        self._list_signature: tuple[tuple[int, int], tuple[int, int]] | None = None
         self._build()
 
     def _build(self) -> None:
@@ -152,9 +153,14 @@ class ProfilesPage(Page):
             self.window.worker.refresh_colors(
                 callback=lambda loaded: self.window.set_state_local(loaded)
             )
-        self._rebuild()
+        self._rebuild(force=True)
 
-    def _rebuild(self) -> None:
+    def _rebuild(self, *, force: bool = False) -> None:
+        signature = (profiles.directory_signature(),
+                     profiles.directory_signature(config.backups_dir()))
+        if not force and signature == self._list_signature:
+            return
+        self._list_signature = signature
         self._rebuild_saved()
         self._rebuild_backups()
 
@@ -283,6 +289,15 @@ class ProfilesPage(Page):
         dialog.set_default_response("save")
         dialog.set_close_response("cancel")
 
+        def persist(profile, *, overwrite: bool = False) -> None:
+            try:
+                profile.save(overwrite=overwrite)
+            except (OSError, ValueError) as exc:
+                self.window.notify(f"Could not save profile: {exc}")
+                return
+            self.window.notify(f"Saved “{profile.name}”.")
+            self._rebuild(force=True)
+
         def response(_dialog, response_id):
             if response_id != "save":
                 return
@@ -293,12 +308,29 @@ class ProfilesPage(Page):
                     description.get_text().strip(),
                     full=False,
                 )
-                profile.save()
             except (OSError, ValueError) as exc:
-                self.window.notify(f"Could not save profile: {exc}")
+                self.window.notify(f"Could not create profile: {exc}")
                 return
-            self.window.notify(f"Saved “{profile.name}”.")
-            self._rebuild()
+            if any(saved.name == profile.name for saved in profiles.list_profiles()):
+                confirm = Adw.AlertDialog(
+                    heading=f"Replace “{profile.name}”?",
+                    body="A saved tuning profile with this name already exists.",
+                )
+                confirm.add_response("cancel", "Cancel")
+                confirm.add_response("replace", "Replace")
+                confirm.set_response_appearance(
+                    "replace", Adw.ResponseAppearance.DESTRUCTIVE
+                )
+                confirm.set_default_response("cancel")
+                confirm.set_close_response("cancel")
+                confirm.connect(
+                    "response",
+                    lambda _d, answer: persist(profile, overwrite=True)
+                    if answer == "replace" else None,
+                )
+                confirm.present(self.window)
+                return
+            persist(profile)
 
         dialog.connect("response", response)
         dialog.present(self.window)
@@ -378,6 +410,19 @@ class ProfilesPage(Page):
         store.append(filters)
         dialog.set_filters(store)
 
+        def persist(profile, *, overwrite: bool = False) -> bool:
+            try:
+                profile.save(
+                    config.backups_dir() if profile.is_full else None,
+                    overwrite=overwrite,
+                )
+            except (OSError, ValueError) as exc:
+                self.window.notify(f"Could not import: {exc}")
+                return False
+            self.window.notify(f"Imported “{profile.name}”.")
+            self._rebuild(force=True)
+            return True
+
         def done(source, result):
             try:
                 file = source.open_finish(result)
@@ -388,12 +433,38 @@ class ProfilesPage(Page):
                 return
             try:
                 profile = profiles.Profile.load(Path(path))
-                profile.save(config.backups_dir() if profile.is_full else None)
             except (OSError, ValueError) as exc:
                 self.window.notify(f"Could not import: {exc}")
                 return
-            self.window.notify(f"Imported “{profile.name}”.")
-            self._rebuild()
+            if persist(profile):
+                return
+            # The save was refused; if it was a name collision, offer an
+            # explicit replace instead of silently overwriting.
+            destination = config.backups_dir() if profile.is_full else config.profiles_dir()
+            try:
+                existing = profiles.Profile.load(
+                    destination / f"{profiles.safe_filename(profile.name)}.json"
+                )
+            except (OSError, ValueError):
+                existing = None
+            if existing is not None and existing.name == profile.name:
+                confirm = Adw.AlertDialog(
+                    heading=f"Replace “{profile.name}”?",
+                    body="An imported profile with this name already exists.",
+                )
+                confirm.add_response("cancel", "Cancel")
+                confirm.add_response("replace", "Replace")
+                confirm.set_response_appearance(
+                    "replace", Adw.ResponseAppearance.DESTRUCTIVE
+                )
+                confirm.set_default_response("cancel")
+                confirm.set_close_response("cancel")
+                confirm.connect(
+                    "response",
+                    lambda _d, answer: persist(profile, overwrite=True)
+                    if answer == "replace" else None,
+                )
+                confirm.present(self.window)
 
         dialog.open(self.window, None, done)
 

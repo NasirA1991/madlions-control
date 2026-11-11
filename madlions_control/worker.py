@@ -7,6 +7,7 @@ stream for the Test page.
 
 from __future__ import annotations
 
+import os
 import queue
 import threading
 import time
@@ -43,6 +44,7 @@ class DeviceWorker:
         self._stream_hz = 60.0
         self._last_connect_error = ""
         self._next_connect = 0.0
+        self._next_health = 0.0
         self._lock = threading.Lock()
 
     # -- lifecycle ---------------------------------------------------------
@@ -57,10 +59,15 @@ class DeviceWorker:
         self._stop.set()
         self._stream_stop.set()
         self._queue.put(None)
-        if self._thread is not None:
-            self._thread.join(timeout=3)
+        thread = self._thread
+        if thread is not None:
+            thread.join(timeout=3)
+            if thread.is_alive():
+                # The worker may still be inside one telemetry read.  It owns
+                # the fd and closes it in its own finally block; never close
+                # the device underneath a running read.
+                return
             self._thread = None
-        self._disconnect()
 
     @property
     def state(self) -> KeyboardState:
@@ -130,6 +137,12 @@ class DeviceWorker:
 
     # -- thread loop -------------------------------------------------------
     def _run(self) -> None:
+        try:
+            self._run_loop()
+        finally:
+            self._disconnect()
+
+    def _run_loop(self) -> None:
         while not self._stop.is_set():
             if self._device is None:
                 if time.monotonic() < self._next_connect:
@@ -143,6 +156,14 @@ class DeviceWorker:
                     continue
 
             # Live telemetry if the Test page is subscribed.
+            if (self._device is not None and not self.demo
+                    and time.monotonic() >= self._next_health):
+                self._next_health = time.monotonic() + 2.0
+                path = getattr(getattr(self._device, "info", None), "path", "")
+                if path and not os.path.exists(path):
+                    self._disconnect()
+                    continue
+
             if self._stream_cb and not self._stream_stop.is_set():
                 now = time.monotonic()
                 if now >= self._next_stream:

@@ -98,7 +98,7 @@ feel of every single key**.
 - Demo mode (`--demo`) to explore the app without a keyboard.
 - No tray daemon, no background service, no account, no telemetry.
 
-![Keyboard shortcuts](docs/screenshots/shortcuts.png?v=2)
+![Fn shortcuts](docs/screenshots/shortcuts.png?v=2)
 ![Profiles](docs/screenshots/profiles.png?v=2)
 
 ## Supported keyboards
@@ -227,13 +227,14 @@ same instructions.
 - **Test** — live analogue travel; click a key to follow it.
 - **Profiles** — save tuning setups, reset to the observed baseline, create a
   full restorable backup, apply a preset, export/import, or roll back.
-- **Keyboard shortcuts** — use the keyboard icon in the header, or the main
-  menu, to see the current Fn layer and its lighting controls.
+- **Fn shortcuts** — use the keyboard icon in the header, or the main menu,
+  to see the current Fn layer and its lighting controls.
 
 A small but important detail: almost everything on this keyboard is applied
 volatilely first, so experimenting costs no flash write endurance. **Save to
-keyboard** is the one explicit commit action. Keymap and macro changes are the
-exception: the firmware writes those immediately.
+keyboard** is the one explicit commit action for tuning. Keymap, macro and
+advanced-key changes are the exception: they are sent immediately rather than
+staged.
 
 ## CLI
 
@@ -264,10 +265,10 @@ any command uses a simulated keyboard.
 - **Local only.** No network requests, no accounts, no telemetry, no vendor
   service.
 - **Explicit persistence.** Actuation and rapid trigger changes apply without
-  touching flash. **Save to keyboard** commits them and saves the lighting; the
-  keymap and macros are persistent as soon as you write them.
-- **Keymap and macros are persistent by nature.** The app labels those edits
-  clearly before you make them.
+  touching flash. **Save to keyboard** commits them and saves the lighting.
+  Keymap, macro and advanced-key edits are sent immediately rather than staged.
+- **Persistent sections are labelled.** The app says when an edit is written
+  immediately instead of being held for **Save to keyboard**.
 - **Backups.** Profiles are plain JSON in
   `~/.local/share/madlions-control/profiles`; automatic tuning snapshots live in
   `profiles/backups` and keep the last ten. Full backups also live there and
@@ -307,7 +308,8 @@ swatch can differ slightly from the colour you chose. The key is still set to th
 colour that was written.
 
 **Changes disappear after unplugging.**
-Use **Save to keyboard**. Keymap and macro edits are already persistent.
+Use **Save to keyboard** for tuning. Keymap, macro and advanced-key edits are
+written immediately.
 
 **Flatpak cannot see the keyboard.**
 Install the host udev rule and replug the device; the Flatpak itself already has

@@ -110,7 +110,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         shortcuts = Gtk.Button()
         shortcuts.set_child(Gtk.Image.new_from_icon_name("input-keyboard-symbolic"))
-        shortcuts.set_tooltip_text("Keyboard shortcuts")
+        shortcuts.set_tooltip_text("Fn shortcuts")
         shortcuts.add_css_class("flat")
         shortcuts.connect("clicked", lambda _b: self.show_shortcuts())
         header.pack_start(shortcuts)
@@ -123,7 +123,7 @@ class MainWindow(Adw.ApplicationWindow):
         header.pack_start(save)
 
         menu = Gio.Menu()
-        menu.append("Keyboard shortcuts", "win.shortcuts")
+        menu.append("Fn shortcuts", "win.shortcuts")
         menu.append("Refresh from keyboard", "win.refresh")
         menu.append("Reset tuning…", "win.reset-tuning")
         menu.append("Device diagnostics", "win.diagnostics")
@@ -138,6 +138,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         for name, callback in (
             ("refresh", lambda: self.refresh()),
+            ("save", lambda: self.save_to_keyboard()),
             ("shortcuts", lambda: self.show_shortcuts()),
             ("reset-tuning", lambda: self.reset_tuning()),
             ("diagnostics", lambda: self.show_diagnostics()),
@@ -147,6 +148,13 @@ class MainWindow(Adw.ApplicationWindow):
         ):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", lambda _a, _p, cb=callback: cb())
+            self.add_action(action)
+        for number, page in enumerate(
+            ("overview", "perkey", "lighting", "keymap", "macros",
+             "advanced", "test", "profiles"), start=1,
+        ):
+            action = Gio.SimpleAction.new(f"page-{number}", None)
+            action.connect("activate", lambda _a, _p, p=page: self.go(p))
             self.add_action(action)
         self.toolbar.add_top_bar(header)
 
@@ -664,7 +672,11 @@ class MainWindow(Adw.ApplicationWindow):
             scroller.set_child(text)
             dialog = Adw.AlertDialog(
                 heading="Device diagnostics",
-                body="Read-only information you can attach to an issue. Nothing is uploaded.",
+                body=(
+                    "Read-only information you can attach to an issue. Nothing is "
+                    "uploaded. The USB serial is redacted; use "
+                    "“madlionsctl report --serial” if you deliberately need it."
+                ),
             )
             dialog.set_extra_child(scroller)
             dialog.add_response("copy", "Copy JSON")

@@ -196,8 +196,7 @@ def load_colors(
     except Exception as exc:  # noqa: BLE001
         if strict:
             raise
-        state.warnings.append(f"per-key colours: {exc}")
-        return state
+        return replace(state, warnings=state.warnings + [f"per-key colours: {exc}"])
 
 
 def load_keymap(device: MadlionsDevice, state: KeyboardState) -> KeyboardState:

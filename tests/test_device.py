@@ -195,3 +195,29 @@ class SaveAllTests(unittest.TestCase):
         stub = self._Stub("lighting write failed")
         self.assertIn("lighting write failed", MadlionsDevice.save_all(stub))
         self.assertTrue(stub.committed)
+
+
+class PopulatedMaskTests(unittest.TestCase):
+    def test_zero_calibration_uses_physical_layout(self):
+        from madlions_control import layout
+
+        class Device:
+            board = boards.DEFAULT_BOARD
+
+            def read_calibration_status(self):
+                return [0] * self.board.total_keys
+
+        mask = MadlionsDevice.populated_mask(Device())
+        self.assertEqual(sum(mask), len(layout.keys_for(boards.DEFAULT_BOARD)))
+
+    def test_protocol_error_still_uses_physical_layout(self):
+        from madlions_control import layout
+
+        class Device:
+            board = boards.DEFAULT_BOARD
+
+            def read_calibration_status(self):
+                raise ProtocolError("unsupported")
+
+        mask = MadlionsDevice.populated_mask(Device())
+        self.assertEqual(sum(mask), len(layout.keys_for(boards.DEFAULT_BOARD)))

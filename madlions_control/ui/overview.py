@@ -21,6 +21,7 @@ class OverviewPage(Page):
 
     def __init__(self, window) -> None:
         super().__init__(window, max_width=1040)
+        self._profile_signature: tuple[int, int] | None = None
         self._build()
 
     def _build(self) -> None:
@@ -166,10 +167,13 @@ class OverviewPage(Page):
         enabled = sum(1 for rt in state.rapid_trigger if rt.enabled)
         self.stat_rt.set(f"{enabled}", f"of {len(state.rapid_trigger)} keys with RT")
         self.stat_layout.set(f"{info.board.rows}×{info.board.cols}", f"{info.board.total_keys} matrix cells")
-        saved = len(profiles.list_profiles())
-        self.stat_profile.set(str(saved), "saved profiles")
+        signature = profiles.directory_signature()
+        if signature != self._profile_signature:
+            self._profile_signature = signature
+            saved = profiles.list_profiles()
+            self.stat_profile.set(str(len(saved)), "saved profiles")
+            self._update_profiles(saved)
         self._update_glance(state)
-        self._update_profiles()
         if state.permission_error:
             self._show_banner(
                 "The keyboard is visible but this user cannot open its HID node. "
@@ -227,10 +231,9 @@ class OverviewPage(Page):
         for key, value in values.items():
             self.glance_values[key].set_text(value)
 
-    def _update_profiles(self) -> None:
+    def _update_profiles(self, saved) -> None:
         while child := self.profile_rows.get_first_child():
             self.profile_rows.remove(child)
-        saved = profiles.list_profiles()
         for profile in saved[:3]:
             widget = row(profile.name, profiles.profile_summary(profile),
                          trailing=button("Apply", flat=True))

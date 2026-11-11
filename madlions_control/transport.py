@@ -9,6 +9,7 @@ interfaces in different orders.
 from __future__ import annotations
 
 import errno
+import fcntl
 import os
 import select
 import time
@@ -34,6 +35,10 @@ class DeviceError(RuntimeError):
 
 class DeviceNotFound(DeviceError):
     pass
+
+
+class DeviceBusy(DeviceError):
+    """Another process already owns the keyboard's configuration channel."""
 
 
 class PermissionDenied(DeviceError):
@@ -242,6 +247,9 @@ class HidrawTransport:
         if self.fd >= 0:
             return
         try:
+            # Even read-only HID requests are sent with write(); opening the
+            # node O_RDONLY would make every GET fail with EBADF.  Read-only is
+            # enforced by MadlionsDevice._guard instead.
             self.fd = os.open(self.info.path, os.O_RDWR | os.O_NONBLOCK)
         except PermissionError as exc:
             raise PermissionDenied(
@@ -252,6 +260,15 @@ class HidrawTransport:
             raise DeviceNotFound(f"{self.info.path} disappeared") from exc
         except OSError as exc:
             raise DeviceError(f"Could not open {self.info.path}: {exc}") from exc
+        try:
+            fcntl.flock(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            os.close(self.fd)
+            self.fd = -1
+            raise DeviceBusy(
+                f"{self.info.path} is already in use by another process; "
+                "close the other Madlions Control or madlionsctl session and retry"
+            ) from exc
 
     def close(self) -> None:
         if self.fd >= 0:

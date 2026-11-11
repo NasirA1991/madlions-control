@@ -30,9 +30,12 @@ class MacroStep:
     keycode: int = 0
     delay_ms: int = 0
     text: str = ""
+    raw: bytes = b""
 
     @property
     def summary(self) -> str:
+        if self.kind == "raw":
+            return "Unsupported step (preserved)"
         if self.kind == "text":
             return f'Text "{self.text}"'
         if self.kind == "delay":
@@ -69,6 +72,7 @@ def decode(data: bytes) -> list[MacroStep]:
             steps.append(MacroStep("text", text=text))
             text = ""
         if index + 1 >= len(data):
+            steps.append(MacroStep("raw", raw=data[index:]))
             break
         opcode = data[index + 1]
         if opcode in (OP_TAP, OP_DOWN, OP_UP) and index + 2 < len(data):
@@ -83,6 +87,7 @@ def decode(data: bytes) -> list[MacroStep]:
             steps.append(MacroStep("delay", delay_ms=_decode_delay(data[index + 2], data[index + 3])))
             index += 4
         else:
+            steps.append(MacroStep("raw", raw=data[index:index + 2]))
             index += 2
     if text:
         steps.append(MacroStep("text", text=text))
@@ -102,6 +107,10 @@ def encode(steps: list[MacroStep]) -> bytes:
                 out.append(code)
         elif step.kind == "delay":
             out += bytes([ESCAPE, OP_DELAY]) + _encode_delay(step.delay_ms)
+        elif step.kind == "raw":
+            if not step.raw:
+                raise ValueError("empty raw macro step")
+            out += step.raw
         elif step.kind in ("tap", "down", "up"):
             if step.keycode < 0 or step.keycode > 0xFFFF:
                 raise ValueError("keycode out of range")
@@ -174,6 +183,8 @@ def steps_summary(steps: list[MacroStep]) -> str:
     for step in steps[:4]:
         if step.kind == "text":
             pieces.append(f'"{step.text[:12]}"')
+        elif step.kind == "raw":
+            pieces.append("unsupported")
         elif step.kind == "delay":
             pieces.append(f"{step.delay_ms} ms")
         else:
