@@ -230,12 +230,10 @@ def udev_rule() -> str:
 class HidrawTransport:
     """Blocking-ish request/response transport over one hidraw node."""
 
-    def __init__(self, info: HidInfo, *, timeout: float = 1.0, debug: bool = False,
-                 read_only: bool = False) -> None:
+    def __init__(self, info: HidInfo, *, timeout: float = 1.0, debug: bool = False) -> None:
         self.info = info
         self.timeout = timeout
         self.debug = debug
-        self.read_only = read_only
         self.fd = -1
         self.prefix = b""
         self._auto_prefix = True
@@ -248,9 +246,11 @@ class HidrawTransport:
     def open(self) -> None:
         if self.fd >= 0:
             return
-        flags = os.O_RDONLY if self.read_only else os.O_RDWR
         try:
-            self.fd = os.open(self.info.path, flags | os.O_NONBLOCK)
+            # Even read-only HID requests are sent with write(); opening the
+            # node O_RDONLY would make every GET fail with EBADF.  Read-only is
+            # enforced by MadlionsDevice._guard instead.
+            self.fd = os.open(self.info.path, os.O_RDWR | os.O_NONBLOCK)
         except PermissionError as exc:
             raise PermissionDenied(
                 f"Permission denied opening {self.info.path}. Install the udev "

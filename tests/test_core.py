@@ -147,13 +147,13 @@ class DemoStateTests(unittest.TestCase):
         self.assertLess(lighting.heat_color(0)[2], lighting.heat_color(1)[0] + 1)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class MacroUnknownOpcodeTests(unittest.TestCase):
     def test_unknown_opcode_round_trips(self):
         from madlions_control import macros_codec
 
         raw = b"a\x01\x7fb\x01"
         self.assertEqual(macros_codec.encode(macros_codec.decode(raw)), raw)
+
+
+if __name__ == "__main__":
+    unittest.main()

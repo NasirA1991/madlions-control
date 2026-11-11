@@ -342,7 +342,7 @@ class MadlionsDevice:
             info = find_supported()
         if not info.supported:
             raise UnsupportedDevice(info.reason or "this HID collection is unsupported")
-        transport = HidrawTransport(info, debug=debug, read_only=read_only)
+        transport = HidrawTransport(info, debug=debug)
         transport.open()
         device = cls(info, transport, read_only=read_only, allow_unverified=allow_unverified)
         try:
