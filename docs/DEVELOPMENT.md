@@ -4,24 +4,18 @@ Madlions Control is a Python 3 GTK4 / libadwaita application. It talks to the
 keyboard over `/dev/hidraw` directly; there is no daemon, no libhidapi dependency
 and no JavaScript bridge.
 
+This document covers the development workflow and architecture. User-facing
+instructions live in the [README](../README.md), [Installation](INSTALLATION.md),
+[Using Madlions Control](USAGE.md), [CLI reference](CLI.md), and
+[Troubleshooting](TROUBLESHOOTING.md).
+
 ## Requirements
 
-- Python 3.10+
-- PyGObject, GTK 4.10+ (the colour dialog is used), libadwaita 1.5+
-- pycairo
-- A C compiler is not needed; the application is pure Python
-
-On Arch / CachyOS:
-
-```bash
-sudo pacman -S python-gobject gtk4 libadwaita python-cairo hicolor-icon-theme
-```
-
-On Debian / Ubuntu:
-
-```bash
-sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 python3-cairo hicolor-icon-theme
-```
+The runtime requirements and distro package commands are maintained in
+[Installation](INSTALLATION.md#requirements). Development adds no C toolchain:
+the application is pure Python. GTK 4.10+ is needed for the colour dialog, and
+libadwaita 1.5+ for the UI. Screenshot generation additionally needs
+`xvfb-run`, `dbus-run-session`, ImageMagick, and `python-xlib`.
 
 ## Run
 
@@ -38,12 +32,14 @@ Demo mode does not open any device and is safe for screenshots and UI work.
 
 ```bash
 python3 -m unittest discover -s tests -v
+xvfb-run -a python3 -m unittest tests.test_widgets -v
 python3 -m compileall -q madlions_control
 ```
 
 `tests/test_device.py` uses a fake transport and validates packet framing and
 the write gate. `tests/test_core.py` covers layouts, keycodes, profiles, macros,
-travel encoding and demo state.
+travel encoding and demo state. `tests/test_widgets.py` needs a display; the CI
+`ui-smoke` job runs it under Xvfb and launches every page in demo mode.
 
 ## Hardware checks
 
@@ -63,15 +59,8 @@ read-only on unverified boards.
 
 Before changing writes on a new board, capture a full backup:
 
-```python
-from madlions_control import state as st
-from madlions_control.device import MadlionsDevice
-d = MadlionsDevice.open()
-s = st.load_basic(d)
-s = st.load_colors(d, s)
-s = st.load_keymap(d, s)
-s = st.load_macros(d, s)
-s = st.load_advanced(d, s)
+```bash
+madlionsctl profile backup --full
 ```
 
 ## Layout
@@ -95,8 +84,10 @@ madlions_control/
 ```
 
 All device traffic is serialized on the worker thread. UI callbacks are posted
-to the GLib main loop. Writes with `flash=FLASH_NORMAL` are volatile; only
-`commit()` and `save_lighting()` persist.
+to the GLib main loop. Tuning writes with `flash=FLASH_NORMAL` are volatile;
+`commit()` persists actuation and rapid trigger, and `save_lighting()` persists
+lighting. Keymap, macro, and advanced-binding writes use their own flash
+operations and take effect immediately.
 
 ## Screenshots
 
@@ -104,9 +95,9 @@ to the GLib main loop. Writes with `flash=FLASH_NORMAL` are volatile; only
 ./tools/screenshots.sh
 ```
 
-This uses `xvfb-run`, ImageMagick and python-xlib. It writes the images in
-`docs/screenshots/` at a 1180 × 780 window size, with the demo keyboard seeded
-with a varied setup.
+This uses `dbus-run-session`, `xvfb-run`, ImageMagick and python-xlib. It writes
+the images in `docs/screenshots/` at a 1180 × 780 window size, with the demo
+keyboard seeded with a varied setup.
 
 ## Packaging
 

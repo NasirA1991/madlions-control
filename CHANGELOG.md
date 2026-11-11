@@ -1,5 +1,35 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Application shortcuts for saving, refreshing, the Fn cheatsheet, quitting, and
+  switching pages.
+- Profile saves ask before replacing an existing profile; the CLI requires
+  `--force`.
+- Unknown macro opcodes are preserved instead of being dropped during edits.
+- Serial numbers are redacted from diagnostics unless explicitly requested.
+
+### Changed
+
+- Documentation is now split into a shorter README plus dedicated installation,
+  usage, CLI, and troubleshooting guides.
+- Actuation and rapid-trigger edits write only the selected keys when the
+  selection is small; larger selections still use a bulk write.
+- Unplugging the keyboard while idle is detected, and the worker owns closing
+  the device during shutdown.
+
+### Fixed
+
+- A lighting-only profile no longer resets actuation and rapid trigger.
+- Only one process can open a keyboard at a time; a second session reports that
+  the device is busy instead of interleaving traffic.
+- Advanced-key and DKS input is validated instead of silently becoming keycode
+  zero, and slots that cannot hold hold/click bindings are rejected.
+- Calibration-mask fallback now follows the physical layout instead of treating
+  every matrix cell as populated.
+
 ## 0.3.3 — 2026-11-08
 
 ### Fixed
