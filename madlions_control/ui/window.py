@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
+import subprocess
 import sys
+import threading
 import traceback
 from pathlib import Path
 
@@ -15,7 +18,7 @@ gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
-from .. import baseline, config, profiles, settings, transport
+from .. import baseline, config, permissions, profiles, settings, transport
 from ..state import KeyboardState
 from ..worker import DeviceWorker
 from .advanced import AdvancedPage
@@ -27,7 +30,7 @@ from .perkey import PerKeyPage
 from .profiles_page import ProfilesPage
 from .shortcuts import ShortcutsDialog
 from .test import TestPage
-from .widgets import StatusPill, copy_text, label, toast
+from .widgets import StatusPill, button, copy_text, label, toast
 
 
 class NavRow(Gtk.ListBoxRow):
@@ -69,6 +72,7 @@ class MainWindow(Adw.ApplicationWindow):
         self._auto_backed_up = False
         self._reset_busy = False
         self._multi_warned = False
+        self._permission_prompted = False
         self._page_specs: dict[str, tuple[str, str, type]] = {}
         self._settings = settings.load()
         self.set_default_size(self._settings.window_width, self._settings.window_height)
@@ -322,6 +326,12 @@ class MainWindow(Adw.ApplicationWindow):
             if not state.info.writable:
                 bits.append("read-only")
             self.mini_sub.set_text(" · ".join(bits))
+        elif state.permission_error:
+            self.status_pill.set_state("offline", "Permission denied")
+            self.title_label.set_text(config.APP_NAME)
+            self.subtitle_label.set_text("Keyboard found, but this user cannot open it")
+            self.mini_title.set_text("Permission denied")
+            self.mini_sub.set_text("Install the udev rule, then replug")
         elif state.error:
             self.status_pill.set_state("offline", "Not connected")
             self.title_label.set_text(config.APP_NAME)
@@ -337,6 +347,10 @@ class MainWindow(Adw.ApplicationWindow):
                 page.on_state(state)
             except Exception as exc:  # noqa: BLE001 - a broken page must not stop the app
                 self._report_page_error(page, exc)
+        if (not self.demo and state.permission_error
+                and not self._permission_prompted):
+            self._permission_prompted = True
+            GLib.idle_add(self.show_permissions)
 
     def set_state_local(self, state: KeyboardState) -> None:
         """Apply an optimistic update while a write is in flight."""
@@ -577,46 +591,177 @@ class MainWindow(Adw.ApplicationWindow):
 
     # -- dialogs -----------------------------------------------------------
     def show_permissions(self) -> None:
-        dialog = Adw.AlertDialog(
-            heading="Keyboard access",
-            body=(
-                "The vendor HID collection is owned by root. The AUR and system "
-                "packages install the rule for you. For AppImage, Flatpak or a "
-                "source run, copy the command below once, then unplug and replug "
-                "the keyboard."
-            ),
+        denied = bool(self.state.permission_error)
+        flatpak = config.is_flatpak()
+        if denied:
+            heading = "Permission denied"
+            body = (
+                "A matching MADLIONS keyboard is visible, but this user is not "
+                "allowed to open its HID node. Install the udev rule once, then "
+                "unplug and replug the keyboard."
+            )
+        elif self.state.connected and not self.state.writable:
+            heading = "Keyboard access"
+            body = (
+                "The keyboard is connected in read-only mode. If this is a "
+                "permission problem, install the udev rule once and replug it."
+            )
+        else:
+            heading = "Keyboard access"
+            body = (
+                "The udev rule lets your desktop user open the keyboard's vendor "
+                "HID collection. AUR and system installs include it. Flatpak, "
+                "AppImage and source --user installs need it once."
+            )
+
+        directory = Path.home() / "Downloads"
+        saved_rule = directory / transport.RULE_NAME
+        manual = (
+            "# Save the rule file first, then run these commands on the host:\n"
+            "sudo install -Dm644 \\\n"
+            '  "$HOME/Downloads/71-madlions.rules" \\\n'
+            "  /etc/udev/rules.d/71-madlions.rules\n"
+            "sudo udevadm control --reload-rules\n"
+            "sudo udevadm trigger --subsystem-match=hidraw\n"
         )
-        rule = transport.udev_rule()
-        command = (
-            "sudo tee /etc/udev/rules.d/71-madlions.rules >/dev/null <<'EOF'\n"
-            + rule
-            + "EOF\n"
-            "sudo udevadm control --reload-rules && sudo udevadm trigger\n"
-        )
+
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        status = label("", "muted small", wrap=True)
+        status.set_visible(False)
+
+        content.append(label(
+            "If access worked before and stopped after switching user or seat, "
+            "unplug and replug the keyboard.",
+            "muted small", wrap=True,
+        ))
+        buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        buttons.set_halign(Gtk.Align.START)
+        fix = None
+        if not flatpak and shutil.which("pkexec"):
+            fix = button("Fix permissions", icon="dialog-password-symbolic", suggested=True)
+            fix.connect("clicked", lambda _b: self._fix_permissions(fix, status))
+            buttons.append(fix)
+
+        save = button("Save rule file", icon="document-save-symbolic")
+        save.connect("clicked", lambda _b: self._save_rule_file(saved_rule))
+        buttons.append(save)
+
+        copy = button("Copy commands", icon="edit-copy-symbolic")
+        copy.connect("clicked", lambda _b: self._copy_permission_commands(manual, status))
+        buttons.append(copy)
+
+        rescan = button("Rescan", icon="view-refresh-symbolic")
+        rescan.connect("clicked", lambda _b: self._rescan_permissions(status))
+        buttons.append(rescan)
+        content.append(buttons)
+        content.append(status)
+
+        if flatpak:
+            content.append(label(
+                "Flatpak cannot run system commands. Save the rule file, then "
+                "run the commands in a host terminal.",
+                "muted small", wrap=True,
+            ))
+        else:
+            content.append(label(
+                "Manual fix (safe to copy):", "title-4",
+            ))
+
         text = Gtk.TextView()
         text.set_editable(False)
         text.set_monospace(True)
-        text.get_buffer().set_text(command)
+        text.get_buffer().set_text(manual)
         text.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
         scroller = Gtk.ScrolledWindow()
         scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        scroller.set_min_content_height(210)
-        scroller.set_min_content_width(560)
+        scroller.set_min_content_height(135)
+        scroller.set_min_content_width(540)
         scroller.set_child(text)
-        dialog.set_extra_child(scroller)
-        dialog.add_response("copy", "Copy command")
+        content.append(scroller)
+
+        dialog = Adw.AlertDialog(heading=heading, body=body)
+        dialog.set_extra_child(content)
         dialog.add_response("close", "Close")
-        dialog.set_response_appearance("copy", Adw.ResponseAppearance.SUGGESTED)
-        dialog.set_default_response("copy")
         dialog.set_close_response("close")
-
-        def response(_dialog, response_id):
-            if response_id == "copy":
-                copy_text(command)
-                self.notify("Command copied. Replug the keyboard afterwards.")
-
-        dialog.connect("response", response)
         dialog.present(self)
+
+    def _copy_permission_commands(self, manual: str, status: Gtk.Label) -> None:
+        copy_text(manual)
+        status.set_text("Commands copied. Save the rule file first if you have not already.")
+        status.set_visible(True)
+
+    def _rescan_permissions(self, status: Gtk.Label) -> None:
+        self.worker.rescan()
+        status.set_text("Rescanning for the keyboard…")
+        status.set_visible(True)
+
+    def _save_rule_file(self, path: Path) -> None:
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(transport.udev_rule(), encoding="utf-8")
+            path.chmod(0o644)
+        except (OSError, transport.DeviceError) as exc:
+            self.notify(f"Could not save the rule: {exc}")
+            return
+        self.notify(f"Saved {path}. Follow the commands, then replug the keyboard.")
+
+    def _fix_permissions(self, button_widget: Gtk.Button, status: Gtk.Label) -> None:
+        try:
+            rule_text = transport.udev_rule()
+        except transport.DeviceError as exc:
+            status.set_text(str(exc))
+            status.set_visible(True)
+            return
+
+        try:
+            temp_dir, rule_path = permissions.stage_rule(rule_text)
+        except OSError as exc:
+            status.set_text(f"Could not prepare the rule file: {exc}")
+            status.set_visible(True)
+            return
+
+        button_widget.set_sensitive(False)
+        status.set_text("Waiting for authorization…")
+        status.set_visible(True)
+
+        def done(code: int, stderr: str) -> bool:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            if code == 0:
+                status.set_text(
+                    "Rule installed. Replug the keyboard, then use Refresh from keyboard."
+                )
+                status.set_visible(True)
+                self.worker.rescan()
+                self.notify("Rule installed. Replug the keyboard.")
+            elif code == 126:
+                status.set_text(
+                    "Authorization was cancelled. The manual commands below still work."
+                )
+                status.set_visible(True)
+                button_widget.set_sensitive(True)
+            else:
+                detail = stderr.splitlines()[-1] if stderr else f"pkexec exited {code}"
+                status.set_text(f"Could not install the rule: {detail[:240]}")
+                status.set_visible(True)
+                button_widget.set_sensitive(True)
+            return GLib.SOURCE_REMOVE
+
+        def work() -> None:
+            try:
+                completed = subprocess.run(
+                    permissions.fix_command(rule_path),
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                code = completed.returncode
+                stderr = completed.stderr.strip()
+            except OSError as exc:
+                code = -1
+                stderr = str(exc)
+            GLib.idle_add(done, code, stderr)
+
+        threading.Thread(target=work, name="madlions-pkexec", daemon=True).start()
 
     def show_about(self) -> None:
         about = Adw.AboutDialog(

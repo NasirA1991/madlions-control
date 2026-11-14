@@ -67,7 +67,8 @@ madlionsctl profile backup --full
 
 ```
 madlions_control/
-  transport.py       hidraw discovery, request/response, udev rule text
+  transport.py       hidraw discovery, request/response, udev rule loading
+  permissions.py     pkexec fix command and temporary rule staging
   device.py          packet layouts, writes, safety gate, telemetry
   boards.py          supported product IDs and matrix geometry
   layout.py          physical 60% / 65% / grid layouts

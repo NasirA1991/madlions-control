@@ -10,7 +10,7 @@ from madlions_control.device import (
     travel_from_raw,
     travel_to_raw,
 )
-from madlions_control.transport import udev_rule
+from madlions_control.transport import RULE_NAME, udev_rule, udev_rule_path
 
 
 class LayoutTests(unittest.TestCase):
@@ -64,6 +64,8 @@ class ProtocolUnitTests(unittest.TestCase):
         self.assertIn('idVendor}=="373b"', text)
         self.assertIn("uaccess", text)
         self.assertNotIn('SUBSYSTEM=="usb"', text)
+        self.assertEqual(udev_rule_path().name, RULE_NAME)
+        self.assertEqual(text, udev_rule_path().read_text(encoding="utf-8"))
 
 
 class MacroTests(unittest.TestCase):

@@ -11,6 +11,8 @@ finish-args:
   - --socket=wayland
   # Vendor HID collection (/dev/hidraw*)
   - --device=all
+  # The permission dialog can save the udev rule for the host.
+  - --filesystem=xdg-download
 
 modules:
   - name: madlions-control

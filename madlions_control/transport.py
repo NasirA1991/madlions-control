@@ -17,9 +17,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import boards
-from .config import VID, VENDOR_NAME
+from .config import VID, VENDOR_NAME, data_dir
 
 REPORT_SIZE = 32
+RULE_NAME = "71-madlions.rules"
 VENDOR_USAGE_PAGE = b"\x06\x60\xff"
 VENDOR_USAGE = b"\x09\x61"
 COLLECTION = b"\xa1\x01"
@@ -219,12 +220,18 @@ def _bootloader_ids_present() -> set[int]:
     return ids
 
 
+def udev_rule_path() -> Path:
+    """Return the installed or source-checkout copy of the repository rule."""
+    return data_dir() / "udev" / RULE_NAME
+
+
 def udev_rule() -> str:
-    return (
-        "# MADLIONS / FGG keyboards (Shenzhen Yizhita, 373B)\n"
-        "# Grants the active desktop user access to the vendor HID collection.\n"
-        'SUBSYSTEM=="hidraw", ATTRS{idVendor}=="373b", MODE="0660", TAG+="uaccess"\n'
-    )
+    """Read the rule from the repository instead of duplicating it in code."""
+    path = udev_rule_path()
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise DeviceError(f"Could not read the bundled udev rule at {path}: {exc}") from exc
 
 
 class HidrawTransport:

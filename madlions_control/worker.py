@@ -218,6 +218,11 @@ class DeviceWorker:
             return
         self._queue.put((fn, callback, error, description))
 
+    def rescan(self) -> None:
+        """Retry discovery now, for example after installing the udev rule."""
+        with self._lock:
+            self._next_connect = 0.0
+
     def refresh(self, callback: Callable[[KeyboardState], None] | None = None) -> None:
         def load(device: Any) -> KeyboardState:
             loaded = state_mod.load_basic(device)
