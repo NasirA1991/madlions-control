@@ -152,6 +152,37 @@ as a keyboard, and its `71-atk-control.rules` is separate.
 
 ## Install
 
+### Quick install (any distro)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NasirA1991/madlions-control/main/get.sh | bash
+```
+
+Prefer to read it first:
+
+```bash
+curl -fsSLo get.sh https://raw.githubusercontent.com/NasirA1991/madlions-control/main/get.sh
+less get.sh
+bash get.sh
+```
+
+`get.sh` detects your distro and architecture and picks the right method: AUR
+on Arch-based systems, Flatpak when available, otherwise the source tarball.
+It runs as your normal user and uses `sudo` only for the specific system install
+or udev-rule command that needs it. Downloads are checked against the release
+`SHA256SUMS` before extraction or execution. It installs the host udev rule with
+`sudo ./install.sh --udev-only` where needed, records what it did, and tells you
+to replug the keyboard.
+
+Options: `--user`, `--method aur|flatpak|source`, `--version vX.Y.Z`, `--yes`,
+`--dry-run`, and `--uninstall`. Pass them through the pipe with
+`... | bash -s -- --user`.
+
+The Flatpak and source paths require a release whose `install.sh` supports
+`--udev-only`; if the latest release is older, `get.sh` stops and points you to
+the AUR or a newer release. Read the script before running it; do not pipe
+untrusted code from `curl` into a shell.
+
 Every build needs Linux with `hidraw`. Source and AppImage installs also need
 Python 3.10+, GTK 4.10+, and libadwaita 1.5+; the Flatpak uses the GNOME runtime.
 Prebuilt Flatpak and AppImage files are on the
