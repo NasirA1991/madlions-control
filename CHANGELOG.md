@@ -4,6 +4,9 @@
 
 ### Added
 
+- `get.sh` one-line installer for Arch, Flatpak and source installs. It verifies
+  the release `SHA256SUMS`, supports pinned versions, dry runs and recorded
+  uninstalls, and never pipes unverified downloads into a shell.
 - Application shortcuts for saving, refreshing, the Fn cheatsheet, quitting, and
   switching pages.
 - Profile saves ask before replacing an existing profile; the CLI requires

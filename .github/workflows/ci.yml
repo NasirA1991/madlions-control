@@ -16,7 +16,7 @@ jobs:
         run: |
           appstreamcli validate --no-net data/metainfo/io.github.madlionscontrol.MadlionsControl.metainfo.xml
           desktop-file-validate data/io.github.madlionscontrol.MadlionsControl.desktop
-          shellcheck install.sh uninstall.sh packaging/appimage/build.sh packaging/flatpak/build.sh packaging/ci/install-apt-packages.sh
+          shellcheck get.sh install.sh uninstall.sh tests/get-sh/ci.sh packaging/appimage/build.sh packaging/flatpak/build.sh packaging/ci/install-apt-packages.sh
       - name: Unit tests
         run: python3 -m unittest discover -s tests -v
       - name: Byte-compile
@@ -58,3 +58,31 @@ jobs:
               exit 1
             fi
           done
+
+  get-sh:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: ubuntu:24.04
+            mode: dry-run
+            expected: source
+          - image: fedora:latest
+            mode: dry-run
+            expected: Flatpak
+          - image: archlinux:latest
+            mode: dry-run
+            expected: "AUR (makepkg)"
+          - image: ubuntu:24.04
+            mode: integration
+            expected: ""
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run get.sh container checks
+        run: |
+          docker run --rm \
+            --volume "$PWD:/work" \
+            --workdir /work \
+            "${{ matrix.image }}" \
+            bash tests/get-sh/ci.sh "${{ matrix.mode }}" "${{ matrix.expected }}"
