@@ -146,6 +146,10 @@ ID, the GUI detects it with a generic 5 × 15 layout and opens it read-only. A
 [device report](https://github.com/NasirA1991/madlions-control/issues/new?template=device-report.yml)
 is the fastest way to add proper support.
 
+Vendor ID `373b` is shared with other hardware, including ATK mice. Discovery
+requires the MADLIONS 32-byte vendor collection, so an ATK mouse is not listed
+as a keyboard, and its `71-atk-control.rules` is separate.
+
 ## Install
 
 Every build needs Linux with `hidraw`. Source and AppImage installs also need
@@ -155,15 +159,19 @@ Prebuilt Flatpak and AppImage files are on the
 
 | Method | CLI | udev rule | Libraries |
 |---|---|---|---|
-| AUR stable or `-git` | Yes | Installed by the package | Distro Python/GTK packages |
-| Flatpak | No | Install manually | GNOME runtime (downloaded) |
-| AppImage | No | Install manually | Host Python/GTK stack |
-| Source, `sudo ./install.sh` | Yes | Installed by the script | Host Python/GTK packages |
-| Source, `./install.sh --user` | Yes | Install manually | Host Python/GTK packages |
+| AUR stable or `-git` | Yes | Installed in `/usr/lib/udev/rules.d` | Distro Python/GTK packages |
+| Any distro, `install.sh` | Yes | System install: `/usr/lib/udev/rules.d`; `--user`: run `--udev-only` | Host Python/GTK packages |
+| Flatpak | No | Host rule via **Permissions** or `--udev-only` | GNOME runtime (downloaded) |
+| AppImage | No | Host rule via **Permissions** | Host Python/GTK stack |
+| Source tarball | Yes | Same as `install.sh` above | Host Python/GTK packages |
 
-"Install manually" means adding the host udev rule described in
-[Installation](docs/INSTALLATION.md#permissions). AUR and system source installs
-add it for you.
+The udev rule is only needed once. `sudo ./install.sh` and packages install it in
+`/usr/lib/udev/rules.d/71-madlions.rules`. `sudo ./install.sh --udev-only` and
+the app's **Fix permissions** button install the same rule in
+`/etc/udev/rules.d/71-madlions.rules`, so an administrator can add it without
+reinstalling the app. The **Permissions** dialog can also save the rule file
+for manual installation. See
+[Installation](docs/INSTALLATION.md#permissions) for the manual commands.
 
 ### Arch Linux, CachyOS, EndeavourOS
 
@@ -173,7 +181,26 @@ paru -S madlions-control-git   # latest main
 ```
 
 Use `yay` in place of `paru` if that is your AUR helper. The packages install
-the app, CLI, desktop entry, icons, AppStream metadata, and the udev rule.
+the app, CLI, desktop entry, icons, AppStream metadata, and
+`/usr/lib/udev/rules.d/71-madlions.rules`. They never own the `/etc` rule.
+
+### Any distribution: install script
+
+```bash
+git clone https://github.com/NasirA1991/madlions-control.git
+cd madlions-control
+
+sudo ./install.sh              # system-wide, includes the package udev rule
+# or:
+./install.sh --user            # ~/.local, no root
+sudo ./install.sh --udev-only  # one-time /etc rule for the --user install
+```
+
+A system install writes `/usr/lib/udev/rules.d/71-madlions.rules`. A `--user`
+install does not touch udev; run `--udev-only` once for your user. Remove an
+install with `sudo ./uninstall.sh`, `./uninstall.sh --user` for a user install,
+or `sudo ./uninstall.sh --udev-only` to remove just the `/etc` rule. Read
+`install.sh` before running it; do not pipe it from `curl` into a shell.
 
 ### Flatpak
 
@@ -183,7 +210,9 @@ flatpak run io.github.madlionscontrol.MadlionsControl
 ```
 
 The Flatpak uses the GNOME runtime and requests `--device=all`, because Flatpak
-cannot currently restrict access to a single `/dev/hidraw` node.
+cannot currently restrict access to a single `/dev/hidraw` node. It still needs
+a host udev rule. Open **Permissions** and use **Save rule file**; from a
+source checkout you can instead run `sudo ./install.sh --udev-only` once.
 
 ### AppImage
 
@@ -192,20 +221,24 @@ chmod +x madlions-control-*-x86_64.AppImage
 ./madlions-control-*-x86_64.AppImage
 ```
 
-The AppImage uses the host's Python and GTK stack.
+The AppImage uses the host's Python and GTK stack: Python 3.10+, GTK 4.10+,
+libadwaita 1.5+, PyGObject, PangoCairo, pycairo, and a desktop icon theme. Keep
+the host dependency list from [Requirements](docs/INSTALLATION.md#requirements)
+handy. The AppImage is GUI-only and does not install `madlionsctl` or a udev
+rule; add the host rule from **Permissions** if the keyboard cannot be opened.
 
-### From source
+### Source tarball
+
+Download the source tarball from the
+[releases page](https://github.com/NasirA1991/madlions-control/releases), then
+extract it and use the same installer steps:
 
 ```bash
-git clone https://github.com/NasirA1991/madlions-control.git
-cd madlions-control
-sudo ./install.sh              # /usr; installs the udev rule and desktop entry
-# or: ./install.sh --user      # ~/.local; no root, no udev rule
+tar -xzf madlions-control-*.tar.gz
+cd madlions-control-*/
+sudo ./install.sh              # system-wide
+# or: ./install.sh --user      # then sudo ./install.sh --udev-only
 ```
-
-See [Installation](docs/INSTALLATION.md) for dependency lists, permissions,
-update instructions, and uninstall steps. `madlionsctl` is included in the AUR
-and source installs; the Flatpak and AppImage provide the GUI only.
 
 ### Try without hardware
 

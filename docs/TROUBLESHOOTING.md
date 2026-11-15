@@ -35,21 +35,43 @@ cable/port before opening a report.
 
 ## Permission denied or read-only
 
-The app opens `/dev/hidraw*` directly. Your user needs access through the udev
-rule:
+The app opens `/dev/hidraw*` directly. Your user needs the MADLIONS udev rule.
+If a supported keyboard is visible but opening it fails, the app shows
+**Permission denied** and opens the **Permissions** dialog once per session. The
+same dialog is available from the main menu.
 
-```udev
-SUBSYSTEM=="hidraw", ATTRS{idVendor}=="373b", MODE="0660", TAG+="uaccess"
-```
+Use the route for your install:
 
-Install it if it is missing:
+- **AUR or system source install:** the package rule is already in
+  `/usr/lib/udev/rules.d/71-madlions.rules`. Unplug and replug the keyboard.
+- **Source `--user` install:** run the one-time, root-only rule install from
+  the checkout. It writes `/etc/udev/rules.d/71-madlions.rules`:
 
-```bash
-printf '%s\n' 'SUBSYSTEM=="hidraw", ATTRS{idVendor}=="373b", MODE="0660", TAG+="uaccess"' \
-  | sudo tee /usr/lib/udev/rules.d/71-madlions.rules
-sudo udevadm control --reload-rules
-sudo udevadm trigger --subsystem-match=hidraw
-```
+  ```bash
+  sudo ./install.sh --udev-only
+  ```
+
+- **AppImage, Flatpak, or a moved install:** open **Permissions**, choose
+  **Save rule file**, then run the commands shown there on the host:
+
+  ```bash
+  sudo install -Dm644 "$HOME/Downloads/71-madlions.rules" \
+    /etc/udev/rules.d/71-madlions.rules
+  sudo udevadm control --reload-rules
+  sudo udevadm trigger --subsystem-match=hidraw
+  ```
+
+  On AppImage and source installs with polkit, **Fix permissions** can run the
+  same install after one authentication prompt. Flatpak deliberately cannot run
+  host commands; use **Save rule file** instead.
+
+The rule is shipped once, in `data/udev/71-madlions.rules`; the app reads that
+file rather than embedding a copy. Packages and system installs use
+`/usr/lib/udev/rules.d/71-madlions.rules`; `--udev-only` and **Fix permissions**
+use `/etc/udev/rules.d/71-madlions.rules`. udev accepts either location. If
+access worked before and stopped after switching user or seat, unplug and replug
+the keyboard. The **Permissions** dialog also has a **Rescan** button. Do not
+edit or remove `71-atk-control.rules`, which belongs to the ATK mouse app.
 
 Then unplug and replug the keyboard. Check the ACL:
 
@@ -111,9 +133,9 @@ flatpak info --show-permissions io.github.madlionscontrol.MadlionsControl
 ls -l /dev/hidraw*
 ```
 
-The permissions should include device access. Install the host rule from the
-[Permissions](#permission-denied-or-read-only) section, replug, and restart the
-app:
+The permissions should include device access. If the keyboard still cannot be
+opened, open **Permissions** in the Flatpak, choose **Save rule file**, and run
+the displayed commands on the host. Replug the keyboard, then restart the app:
 
 ```bash
 flatpak run io.github.madlionscontrol.MadlionsControl

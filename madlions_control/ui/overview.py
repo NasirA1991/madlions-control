@@ -134,11 +134,18 @@ class OverviewPage(Page):
     def on_state(self, state) -> None:
         if not state.connected or not state.info:
             self.hero_canvas.set_state(state)
-            self.hero_title.set_text("Keyboard not connected")
-            self.hero_sub.set_text(
-                "Plug in a MADLIONS keyboard. If it is already connected, check "
-                "the USB cable and the permission note below."
-            )
+            if state.permission_error:
+                self.hero_title.set_text("Keyboard found, permission denied")
+                self.hero_sub.set_text(
+                    "The keyboard is visible, but this user cannot open its HID "
+                    "node. Install the udev rule, then replug it."
+                )
+            else:
+                self.hero_title.set_text("Keyboard not connected")
+                self.hero_sub.set_text(
+                    "Plug in a MADLIONS keyboard. If it is already connected, check "
+                    "the USB cable and the permission note below."
+                )
             self.hero_meta.set_text("")
             self.stat_actuation.set("—", "actuation range")
             self.stat_rt.set("—", "rapid trigger keys")

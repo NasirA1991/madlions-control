@@ -10,6 +10,17 @@
   `--force`.
 - Unknown macro opcodes are preserved instead of being dropped during edits.
 - Serial numbers are redacted from diagnostics unless explicitly requested.
+- `install.sh` checks Python/GTK imports before copying, supports
+  `--user`, `--udev-only`, `--skip-deps`, and clear `--help`/root errors.
+  System and package installs write the rule to
+  `/usr/lib/udev/rules.d/71-madlions.rules`; `--udev-only` and the in-app
+  permission fix use the administrator rule in `/etc/udev/rules.d/`.
+  `uninstall.sh` removes both for a system uninstall, never touches `/etc` for
+  `--user`, and has a `--udev-only` mode.
+- The Permissions dialog can save the rule to Downloads, copy host commands,
+  rescan for the device, or install the rule with one pkexec call when polkit
+  is available. It opens automatically once per session after a permission
+  failure and points out that switching user or seat may require a replug.
 
 ### Changed
 
@@ -19,6 +30,14 @@
   selection is small; larger selections still use a bulk write.
 - Unplugging the keyboard while idle is detected, and the worker owns closing
   the device during shutdown.
+- The udev rule is read from the packaged rule file instead of duplicated in
+  Python. Packages and system installs keep it in `/usr/lib/udev/rules.d`;
+  `--udev-only` and **Fix permissions** write `/etc/udev/rules.d`.
+- The Flatpak requests access to the Downloads folder so the permission dialog
+  can save the host rule.
+- A system install or uninstall refuses to touch paths owned by another package
+  manager package unless `--force` is passed; icon cache refreshes only reuse an
+  existing cache instead of creating one.
 
 ### Fixed
 

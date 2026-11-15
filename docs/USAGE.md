@@ -35,7 +35,7 @@ main menu contains:
 - **Refresh from keyboard** — re-read the current state.
 - **Reset tuning…** — apply the verified baseline for the MAD68 HE RGB.
 - **Device diagnostics** — a read-only report for bug reports.
-- **Permissions** — the udev command and access checks.
+- **Permissions** — access checks, Save rule file, Rescan, and the polkit fix.
 - **Appearance** — follow the system theme or force light/dark.
 - **About Madlions Control** — version and project links.
 
