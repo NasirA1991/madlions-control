@@ -37,7 +37,7 @@ install_packages() {
     if command -v apt-get >/dev/null 2>&1; then
         export DEBIAN_FRONTEND=noninteractive
         apt-get update
-        local packages=(sudo curl ca-certificates tar gzip coreutils git python3 passwd)
+        local packages=(sudo curl ca-certificates tar gzip coreutils git python3 passwd util-linux)
         if [[ $MODE == integration ]]; then
             packages+=(
                 python3-gi python3-gi-cairo gir1.2-gtk-4.0 gir1.2-adw-1
@@ -46,13 +46,13 @@ install_packages() {
         fi
         apt-get install -y --no-install-recommends "${packages[@]}"
     elif command -v dnf >/dev/null 2>&1; then
-        local packages=(sudo curl tar gzip coreutils git shadow-utils python3)
+        local packages=(sudo curl tar gzip coreutils git shadow-utils python3 util-linux)
         if [[ $MODE == dry-run ]]; then
             packages+=(flatpak)
         fi
         dnf install -y "${packages[@]}"
     elif command -v pacman >/dev/null 2>&1; then
-        pacman -Sy --noconfirm --needed sudo curl tar gzip coreutils git shadow base-devel
+        pacman -Sy --noconfirm --needed sudo curl tar gzip coreutils git shadow util-linux base-devel
     else
         die "unsupported container: no apt-get, dnf or pacman"
     fi
